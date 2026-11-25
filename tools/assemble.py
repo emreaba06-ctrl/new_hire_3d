@@ -16,6 +16,9 @@ replacements = [
     ("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js", "lib/GLTFLoader.js"),
     ("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js", "lib/SkeletonUtils.js"),
 ]
+import re
+html = re.sub(r"https://cdn\.jsdelivr\.net/npm/three@0\.128\.0/examples/js/(?:[a-z]+/)*([A-Za-z]+\.js)", r"lib/\1", html)
+replacements = [r for r in replacements if "jsdelivr" not in r[0]]
 for old, new in replacements:
     if html.count(old) != 1:
         sys.exit(f"expected exactly one occurrence of {old!r}")

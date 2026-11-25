@@ -9,7 +9,8 @@ const MATS = {}, GEOS = {};
 const QUALITY = {
   perf: { name: "Performance", lines: 0, shadow: 1024, tex: 256, aniso: 2 },
   hd: { name: "HD 1080p", lines: 1080, shadow: 2048, tex: 512, aniso: 8 },
-  ultra: { name: "Ultra 1440p", lines: 1440, shadow: 4096, tex: 1024, aniso: 16 }
+  ultra: { name: "Ultra 1440p", lines: 1440, shadow: 4096, tex: 1024, aniso: 16 },
+  max: { name: "4K", lines: 2160, shadow: 4096, tex: 1024, aniso: 16 }
 };
 const Q = () => QUALITY[(typeof S !== "undefined" && S.gfx) || "hd"] || QUALITY.hd;
 function mat(color, o) {
@@ -114,13 +115,14 @@ function initEngine() {
   E.ok = true; E.last = performance.now(); requestAnimationFrame(loop);
   return true;
 }
-function applyQuality() { if (!E.sun) return; const q = Q(); E.sun.shadow.mapSize.set(q.shadow, q.shadow); if (E.sun.shadow.map) { E.sun.shadow.map.dispose(); E.sun.shadow.map = null; } resize(); }
+function applyQuality() { if (!E.sun) return; const q = Q(); E.sun.shadow.mapSize.set(q.shadow, q.shadow); if (E.sun.shadow.map) { E.sun.shadow.map.dispose(); E.sun.shadow.map = null; } resize(); if (typeof setupPost === "function") setupPost(); }
 function resize() {
   if (!E.renderer) return; const w = window.innerWidth, h = window.innerHeight, q = Q(), dpr = window.devicePixelRatio || 1;
   const pr = q.lines ? clamp(Math.max(dpr, q.lines / h), 1, 3) : Math.min(dpr, 1.25);
   E.renderer.setPixelRatio(pr); E.renderer.setSize(w, h, false); E.camera.aspect = w / h;
   E.camera.fov = w / h < .8 ? 76 : 64; E.camera.updateProjectionMatrix();
   E.res = `${Math.round(w * pr)}×${Math.round(h * pr)}`;
+  if (typeof postResize === "function") postResize();
 }
 function setLighting(hour, weather) {
   const k = clamp((hour - 6) / 14, 0, 1), ang = Math.PI * k;
@@ -167,7 +169,7 @@ function buildOutside(elev, dim) {
   for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, rad = 24 + (i % 3) * 2.5; const tg = new THREE.Group(); tg.position.set(Math.cos(a) * rad, 0, Math.sin(a) * rad); const t = new THREE.Mesh(cgeo(.18, .24, 2.2, 8), trunk); t.position.y = 1.1; tg.add(t); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(1.4, 1), leaf); f.position.y = 3; f.castShadow = true; tg.add(f); out.add(tg); }
 }
 function wallSeg(g, len, H, T, color, windows) {
-  const wm = mat(color, { rough: .92 });
+  const wm = S.gfx !== "perf" && typeof richWallMat === "function" ? richWallMat(color) : mat(color, { rough: .92 });
   if (!windows) { box(g, len, H, T, color, 0, 0, 0, { mat: wm }); return; }
   const ww = 2.6, ps = []; for (let p = -len / 2 + 2.4; p < len / 2 - 1.6; p += 3.6) ps.push(p);
   const wb = .55, wt = Math.min(H - .3, 2.9), wh = wt - wb;
@@ -188,7 +190,7 @@ function buildRoom(W, D, floorKind, floorColor, wallColor, o = {}) {
   if (!E.beamTex) E.beamTex = canvasTex(64, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); const gx = g.createLinearGradient(0, 0, w, 0); gx.addColorStop(0, "rgba(0,0,0,1)"); gx.addColorStop(.2, "rgba(0,0,0,0)"); gx.addColorStop(.8, "rgba(0,0,0,0)"); gx.addColorStop(1, "rgba(0,0,0,1)"); g.globalCompositeOperation = "destination-out"; g.fillStyle = gx; g.fillRect(0, 0, w, h); }, false);
   E.beamMat = new THREE.MeshBasicMaterial({ color: lin("#ffc98a"), map: E.beamTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
   const ft = floorTex(floorKind, floorColor); const rep = floorKind === "marble" ? 4 : floorKind === "carpet" ? 1.7 : 3; ft.repeat.set(W / rep, D / rep);
-  const fm = new THREE.MeshStandardMaterial({ map: ft, roughness: { marble: .18, wood: .5, concrete: .85 }[floorKind] ?? .95, metalness: 0 });
+  const fm = (S.gfx !== "perf" && typeof richFloorMat === "function" && richFloorMat(floorKind, floorColor, W, D)) || new THREE.MeshStandardMaterial({ map: ft, roughness: { marble: .18, wood: .5, concrete: .85 }[floorKind] ?? .95, metalness: 0 });
   const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, D), fm); fl.rotation.x = -Math.PI / 2; fl.receiveShadow = true; fl.userData.floor = true; E.world.add(fl); E.clickables.push(fl); E.floor = fl;
   const ct = floorTex("ceiling"); ct.repeat.set(W / 4, D / 4);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })); ceil.rotation.x = Math.PI / 2; ceil.position.y = H; E.world.add(ceil); E.ceil = ceil;

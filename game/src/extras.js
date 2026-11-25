@@ -84,7 +84,7 @@ function photoMode(on) {
 }
 async function savePhoto() {
   try {
-    E.renderer.render(E.scene, E.camera);
+    renderFrame();
     const blob = await new Promise(r => E.renderer.domElement.toBlob(r, "image/png"));
     if (!blob) throw 0;
     const dl = window.claude && claude.use ? await claude.use("downloads") : null;

@@ -15,7 +15,7 @@ PROP.desk = function (x, z, ry = 0, o = {}) {
   if (!o.noChair) PROP.chair(g, 0, -.8, o.chair || "#5a5148");
   if (o.phone || o.cubicle) { box(g, .24, .06, .2, "#e9e4da", -.58, .77, .08, { m: { rough: .4 } }); const hs = box(g, .22, .05, .06, "#e9e4da", -.58, .83, .14, { m: { rough: .4 } }); box(g, .05, .02, .05, "#3a3a3a", -.62, .83, .03); }
   if (o.cubicle) {
-    const fab = mat(o.cubicle, { rough: .95 }), trim = mat("#c8bfae", { rough: .5 });
+    const fab = S.gfx !== "perf" ? fabricMat(o.cubicle) : mat(o.cubicle, { rough: .95 }), trim = mat("#c8bfae", { rough: .5 });
     const back = new THREE.Mesh(bgeo(1.82, 1.22, .06), fab); back.position.set(0, .61, .47); back.castShadow = back.receiveShadow = true; g.add(back);
     const side = new THREE.Mesh(bgeo(.06, 1.22, .95), fab); side.position.set(.9, .61, 0); side.castShadow = side.receiveShadow = true; g.add(side);
     box(g, 1.86, .04, .08, "#c8bfae", 0, 1.22, .47, { mat: trim, cast: false }); box(g, .08, .04, .99, "#c8bfae", .9, 1.22, 0, { mat: trim, cast: false });
@@ -367,7 +367,7 @@ function loop(now) {
     if (E.rain) { const a = E.rain.geometry.attributes.position; for (let i = 0; i < a.count; i += 2) { let y = a.getY(i) - dt * 16; if (y < -2) y += 10; a.setY(i, y); a.setY(i + 1, y - .6); } a.needsUpdate = true; }
     if (E.ring.visible) E.ring.rotation.z += dt * 2;
     Game.tick(dt); updateCamera(dt); updateLabels();
-    E.renderer.render(E.scene, E.camera);
+    renderFrame();
   } catch (err) { console.error(err); }
   requestAnimationFrame(loop);
 }
