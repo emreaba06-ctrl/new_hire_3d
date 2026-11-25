@@ -54,6 +54,7 @@ js = "\n".join([
     (here / "style.js").read_text(encoding="utf-8"),
     (here / "play.js").read_text(encoding="utf-8"),
     (here / "play2.js").read_text(encoding="utf-8"),
+    (here / "declutter.js").read_text(encoding="utf-8"),
     (here / "toon.js").read_text(encoding="utf-8"),
     (here / "online.js").read_text(encoding="utf-8"),
     "boot();\n",

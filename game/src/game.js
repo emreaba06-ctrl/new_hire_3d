@@ -139,7 +139,7 @@ function goLocation(loc, opts = {}) {
     else if (loc === "garage") buildGarage(opts);
     else if (loc === "street") buildStreet(opts);
     if (loc === "cafe" && opts.party) partyDecor(opts.party);
-    decorate(); lobbySecret(); livingReset();
+    decorate(); lobbySecret(); livingReset(); declutter();
     if (S.partyPending === S.day && S.phase === "evening" && loc !== "cafe" && loc !== "home" && holiday()) { S.partyPending = 0; setTimeout(() => offerParty(holiday()), 1200); }
     setLighting(hourNow(), S.weather); hud(); hudTick(); Voice.stop(); Music.play(musicFor());
     if (opts.fromElevator || loc === "floor") { Sfx.tone(1318, .5, "sine", .05); Sfx.tone(1046, .7, "sine", .045, .32); }
@@ -463,7 +463,7 @@ function resolveTask(x, ok) {
   }
 }
 function tick(dt) {
-  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt); tutTick(dt);
+  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt); tutTick(dt); if (LOC !== "title") personalSpace();
   if (E.F && LOC === "floor") lifeTick(dt);
   E.lightT = (E.lightT || 0) + dt; if (E.lightT > 1) { E.lightT = 0; if (LOC !== "title") setLighting(hourNow(), S.weather); if (CUR_JOB && THEMES[CUR_JOB] && THEMES[CUR_JOB].dim) E.hemi.intensity = .55; hudTick(); if (Music.out && Music.cur && musicFor() !== Music.want) Music.play(musicFor()); }
   const c = !E.uiOpen && LOC !== "title" ? candidates() : null; const pr = $("#prompt");
@@ -836,4 +836,4 @@ function boot() {
   setTimeout(go, 45000);
   initOnline();
 }
-window.__nh = { JOBS, plain, genderFor, get models() { return modelsReady; }, Music, Voice, get S() { return S; }, get SH() { return SH; }, E, Player, goLocation, startShift, jobById, interactWith, openShiftTask, endShift, nextDay, openPhone, openTraining, openDaily, openAskMentor: (...a) => openAskMentor(...a), validateSave: o => validateSave(o), openElevator, get LOC() { return LOC; }, openMenuNow: () => openMenu(todaysMenu()), openRaise: j => openRaise(j), afterShift: (...a) => afterShift(...a), jobState, openWfh: () => openWfh(), adoptPet: id => adoptPet(PETS.find(p => p.id === id)), rideTalk: f => rideTalk(f), openInterview: (j, f) => openInterview(j, f), startEvent: ev => startEvent(ev), openHustles: () => openHustles(), storyCheck: () => storyCheck(), bizDay: () => bizDay(), openEndless: () => openEndless(), offerParty: h => offerParty(h), openWardrobe: () => openWardrobe(), updateNPC: (n, dt) => updateNPC(n, dt), tick: dt => tick(dt), get POST() { return POST; }, debugGfx: (g, lines) => { if (lines !== undefined) QUALITY[g].lines = lines; S.gfx = g; applyQuality(); } };
+window.__nh = { JOBS, plain, genderFor, get models() { return modelsReady; }, Music, Voice, get S() { return S; }, get SH() { return SH; }, E, Player, goLocation, startShift, jobById, interactWith, openShiftTask, endShift, nextDay, openPhone, openTraining, openDaily, openAskMentor: (...a) => openAskMentor(...a), validateSave: o => validateSave(o), openElevator, get LOC() { return LOC; }, openMenuNow: () => openMenu(todaysMenu()), openRaise: j => openRaise(j), afterShift: (...a) => afterShift(...a), jobState, openWfh: () => openWfh(), adoptPet: id => adoptPet(PETS.find(p => p.id === id)), rideTalk: f => rideTalk(f), openInterview: (j, f) => openInterview(j, f), startEvent: ev => startEvent(ev), openHustles: () => openHustles(), storyCheck: () => storyCheck(), bizDay: () => bizDay(), openEndless: () => openEndless(), get DECL() { return DECL; }, offerParty: h => offerParty(h), openWardrobe: () => openWardrobe(), updateNPC: (n, dt) => updateNPC(n, dt), tick: dt => tick(dt), get POST() { return POST; }, debugGfx: (g, lines) => { if (lines !== undefined) QUALITY[g].lines = lines; S.gfx = g; applyQuality(); } };
