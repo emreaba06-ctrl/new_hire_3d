@@ -1,7 +1,7 @@
 {
   "name": "new-hire-3d",
   "productName": "New Hire 3D",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "First-person job simulator: learn real skills across 16 departments.",
   "main": "main.js",
   "author": "New Hire 3D",
