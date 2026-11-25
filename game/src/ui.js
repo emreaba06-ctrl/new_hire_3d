@@ -13,6 +13,7 @@ function openPause() {
       <button class="btn" type="button" id="pS">⚙ Settings</button>
       <button class="btn" type="button" id="pA">♿ Accessibility</button>
       <button class="btn" type="button" id="pH">❓ How to play</button>
+      <button class="btn grey" type="button" id="pB">ℹ About this game</button>
       <button class="btn grey" type="button" id="pT">💾 Save and go to title</button>
       ${desktop ? `<button class="btn orange" type="button" id="pQ">⏻ Save and quit</button>` : ""}
     </div>
@@ -22,7 +23,8 @@ function openPause() {
   $("#pS", ov).addEventListener("click", () => { close(); openSettings(); });
   $("#pA", ov).addEventListener("click", () => { close(); openAccess(); });
   $("#pH", ov).addEventListener("click", () => { close(); openHelp(); });
-  $("#pT", ov).addEventListener("click", () => { save(); close(); SH = null; showTitle(); });
+  $("#pT", ov).addEventListener("click", () => { if (SH && !confirm("You're on a shift. Going to the title screen ends it with no pay. Continue?")) return; if (SH) { SH = null; S.workedToday = true; S.phase = "evening"; } save(); close(); showTitle(); });
+  $("#pB", ov).addEventListener("click", () => { close(); showDisclaimer(); });
   const q = $("#pQ", ov); if (q) q.addEventListener("click", () => { save(); window.close(); });
 }
 window.addEventListener("keydown", e => {
@@ -70,3 +72,15 @@ function tutArrow(pos) {
 
 /* ---------- loading tips ---------- */
 const LOAD_TIPS = ["Tip: press P for photo mode.", "Tip: the cafeteria serves lunch at 12:00. Your shift pauses while you eat.", "Tip: coworkers remember your conversations.", "Tip: press Esc for the pause menu.", "Tip: Visual effects can be turned off in Settings for more speed.", "Tip: side hustles on your home computer earn extra cash in the evening.", "Tip: ask your mentor anything with the 'Ask anything' button."];
+
+/* ---------- disclaimer: shown on first launch, and from Menu → About ---------- */
+const DISC_KEY = "new-hire-3d.disclaimer.v1";
+function disclaimerSeen() { try { return localStorage.getItem(DISC_KEY) === "1"; } catch (e) { return false; } }
+function showDisclaimer(then) {
+  const ov = overlay(`<div class="panel modal about"><div class="bar">A note before you play</div><div class="m-body">
+    <p><b>New Hire 3D</b> was made with the help of AI.</p>
+    <p>It started as a personal project, something built to learn and grow, and over time it has turned into a full game.</p>
+    <p>Thanks for playing!</p>
+    <button class="btn go big" type="button" id="dOk">${then ? "Continue" : "Close"}</button></div></div>`, { sticky: true });
+  $("#dOk", ov).addEventListener("click", () => { try { localStorage.setItem(DISC_KEY, "1"); } catch (e) {} ov.close(); if (then) then(); });
+}

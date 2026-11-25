@@ -55,6 +55,7 @@ const ENDINGS = {
 function storyEnding(f) { const score = (f.honest || f.owned ? 2 : 0) + (f.jax > 2 ? 2 : f.jax > 0 ? 1 : 0) + (f.lead ? 2 : 0) + (f.generous || f.team || f.mentor ? 1 : 0) - (f.liar ? 3 : 0) - (f.left ? 3 : 0) - (f.sneaky ? 2 : 0); return score >= 5 ? "leader" : score >= 1 ? "star" : "fresh"; }
 const storyFlags = () => (S.story = S.story && typeof S.story === "object" ? S.story : { ch: 0, f: { jax: 0 }, log: [] });
 function storyCheck() {
+  if (E.uiOpen) { setTimeout(storyCheck, 1500); return false; }
   const st = storyFlags(); const ch = CHAPTERS[st.ch]; if (!ch || S.stats.shifts < ch.at || !S.player) return false;
   const f = st.f; const choices = typeof ch.choices === "function" ? ch.choices(f) : ch.choices;
   const ov = overlay(`<div class="panel modal"><div class="bar" style="--blue:#7a1f2b">📖 ${esc(ch.title)}</div><div class="m-body">

@@ -52,6 +52,7 @@ js = "\n".join([
     (here / "street.js").read_text(encoding="utf-8"),
     (here / "ui.js").read_text(encoding="utf-8"),
     (here / "style.js").read_text(encoding="utf-8"),
+    (here / "play.js").read_text(encoding="utf-8"),
     (here / "online.js").read_text(encoding="utf-8"),
     "boot();\n",
     "})();",

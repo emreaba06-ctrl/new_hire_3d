@@ -438,6 +438,20 @@ function spawnTask(x) {
   walkTo(npc, [[0, sp[1] - .01], [sp[0], sp[1]]], n => { n.faceTarget = V3(0, 0, 7.2); });
   if (x.urgent) npc.speed = 3.2;
 }
+function finishShiftTask(x, ok, score) {
+      if (!SH) return 0; const job = SH.job; const js = SH.js; let xp = ok ? Math.round(x.t.tier * 10 * SH.diff.xp * (x.urgent ? 2 : 1) * (has("learner") ? 1.15 : 1)) : 2;
+      SH.xp += xp; SH.energy = Math.max(0, SH.energy - 4);
+      if (ok) { changePerf(SH.diff.right + (x.urgent ? 4 : 0)); if (x.urgent) { SH.bonus += 25; S.stats.urgentWins++; } SH.stress = Math.max(0, SH.stress - 4); }
+      else { let w = SH.diff.wrong * (SH.stress > 70 ? 1.5 : 1); if (has("detail") && SH.firstMistake) w *= .5; SH.firstMistake = false; changePerf(w); SH.mistakes++; SH.stress = Math.min(100, SH.stress + 8); }
+      const id = x.baseId || x.t.id; js.done[id] = ok ? "ok" : (js.done[id] === "ok" ? "ok" : "fail"); js.lessons[id] = { s: x.t.subject.replace(/^Project: /, ""), l: x.t.lesson, ok: ok || (js.lessons[id] && js.lessons[id].ok) };
+      if (x.project && ok) { S.projects[job.id] = (S.projects[job.id] || 0) + 1; if (S.projects[job.id] >= 3) { S.money += 250; js.xp += 40; award("project"); toast(`<b>Project complete: ${PROJECTS[job.id].name}!</b> +$250, +40 XP`, "gold"); } else toast(`Project stage done. ${3 - S.projects[job.id]} to go.`); }
+      if (ok) { Player.emote = "cheer"; Player.emoteUntil = E.t + 1.4; }
+      resolveTask(x, ok); save(); checkAch();
+      if (score !== null && score !== undefined && ok) xp = Math.round(xp * (.75 + score * .5));
+      if (ok) { SH.combo = (SH.combo || 0) + 1; const m = 1 + Math.min(SH.combo - 1, 5) * .1; if (SH.combo > 1) { const extra = Math.round(xp * (m - 1)); xp += extra; SH.xp += extra; popText(`Combo ×${SH.combo}`, "gold"); } } else { if ((SH.combo || 0) >= 3) popText("Combo lost", "bad"); SH.combo = 0; }
+      comboHud(); popText(`+${xp} XP`, ok ? "good" : "");
+      return xp;
+}
 function resolveTask(x, ok) {
   x.state = ok === null ? "missed" : "done"; x.ok = !!ok;
   if (x.npc) {
@@ -462,7 +476,7 @@ function tick(dt) {
   SH.energy = Math.max(0, SH.energy - dt / SPM * ff * .1 * (has("stamina") ? .7 : 1));
   for (const x of SH.list) if (x.state === "wait" && x.at <= SH.minute) spawnTask(x);
   for (const x of active) {
-    if (x.npc && x.npc.path.length) continue;
+    if ((x.npc && x.npc.path.length) || x.playing) continue;
     x.patience -= dt; x.patienceRatio = clamp(x.patience / x.max, 0, 1);
     SH.stress = Math.min(100, SH.stress + dt * (x.urgent ? .28 : .12) * (has("calm") ? .75 : 1) * (owns("poster") ? .9 : 1));
     if (x.patience <= 0) {
@@ -493,26 +507,18 @@ function takeBreak() {
 
 /* ---------- task window ---------- */
 function openShiftTask(x) {
+  if (x.playing) { toast("You're already working on this one. Follow the objective at the top."); return; }
   const job = SH.job;
   const timerBase = x.urgent ? SH.diff.urgent : SH.diff.timer;
   const timer = timerBase ? Math.round(timerBase * (owns("watch") ? 1 : 1) * (has("calm") ? 1.3 : 1) * (SH.energy < 30 && !has("unstoppable") ? .85 : 1)) : 0;
   const hintCost = SH.diff.hint * (SH.stress > 70 ? 2 : 1);
   const call = /phone|call|radio/i.test(x.t.from[1]);
   const pc = !call && x.desk ? (x.t.type === "code" ? ["CodePad", "#159a8a"] : x.t.type === "terminal" ? ["Terminal", "#20252c"] : x.t.type === "input" ? ["Sheets", "#3a9e2e"] : /chat/i.test(x.t.from[1]) ? ["LiveChat", "#d9a000"] : /ticket|system|alert|sla|testing/i.test(x.t.from[1]) ? ["Tickets", "#6a3fc1"] : ["Mail", "#2a7fd4"]) : null;
+  const hk = handsOnFor(job, x); if (hk) { runHandsOn(hk, job, x, (ok, score) => finishShiftTask(x, ok, score)); return; }
   if (pc && E.F && E.F.deskPos) { Player.mesh.position.set(E.F.deskPos.x, 0, E.F.deskPos.z + .85); E.yaw = 0; E.pitch = -.22; E.seated = true; }
   openTaskWindow(x.t, { call, pc, color: x.urgent ? "#d6342c" : job.color, urgent: x.urgent, timer, mentor: job.mentor.name, hintCost, freeHint: () => SH.freeHints > 0 ? (SH.freeHints--, true) : false,
     onHint: c => { if (c) changePerf(c); },
-    onFinish: (ok) => {
-      const js = SH.js; let xp = ok ? Math.round(x.t.tier * 10 * SH.diff.xp * (x.urgent ? 2 : 1) * (has("learner") ? 1.15 : 1)) : 2;
-      SH.xp += xp; SH.energy = Math.max(0, SH.energy - 4);
-      if (ok) { changePerf(SH.diff.right + (x.urgent ? 4 : 0)); if (x.urgent) { SH.bonus += 25; S.stats.urgentWins++; } SH.stress = Math.max(0, SH.stress - 4); }
-      else { let w = SH.diff.wrong * (SH.stress > 70 ? 1.5 : 1); if (has("detail") && SH.firstMistake) w *= .5; SH.firstMistake = false; changePerf(w); SH.mistakes++; SH.stress = Math.min(100, SH.stress + 8); }
-      const id = x.baseId || x.t.id; js.done[id] = ok ? "ok" : (js.done[id] === "ok" ? "ok" : "fail"); js.lessons[id] = { s: x.t.subject.replace(/^Project: /, ""), l: x.t.lesson, ok: ok || (js.lessons[id] && js.lessons[id].ok) };
-      if (x.project && ok) { S.projects[job.id] = (S.projects[job.id] || 0) + 1; if (S.projects[job.id] >= 3) { S.money += 250; js.xp += 40; award("project"); toast(`<b>Project complete: ${PROJECTS[job.id].name}!</b> +$250, +40 XP`, "gold"); } else toast(`Project stage done. ${3 - S.projects[job.id]} to go.`); }
-      if (ok) { Player.emote = "cheer"; Player.emoteUntil = E.t + 1.4; }
-      resolveTask(x, ok); save(); checkAch();
-      return xp;
-    } });
+    onFinish: ok => finishShiftTask(x, ok, null) });
 }
 function openTaskWindow(t, o) {
   let finished = false, hinted = false, timerId = null;
@@ -823,7 +829,7 @@ function boot() {
   setupHud();
   if (!initEngine()) { $("#ui").innerHTML = `<div class="overlay"><div class="panel modal"><div class="bar">3D isn't available</div><div class="m-body"><p>Your browser couldn't start 3D graphics (WebGL). Try a recent version of Chrome, Edge, Firefox or Safari, or turn on hardware acceleration in your browser settings.</p></div></div></div>`; return; }
   const lov = overlay(`<div class="loadbox"><div class="ld-title">New Hire <sup>3D</sup></div><div id="ldTxt">Loading the office…</div><div class="meter"><i id="ldBar" style="width:0%"></i></div><div class="small" id="ldTip"></div></div>`, { sticky: true });
-  let shown = false; const go = () => { if (shown) return; shown = true; clearInterval(tipT); lov.close(); showTitle(); };
+  let shown = false; const go = () => { if (shown) return; shown = true; clearInterval(tipT); lov.close(); if (disclaimerSeen()) showTitle(); else showDisclaimer(showTitle); };
   let cp = 0, ex = 0; const bar = () => { const b = $("#ldBar"); if (b) b.style.width = Math.round((cp * .6 + ex * .2) * 100) + "%"; const t = $("#ldTxt"); if (t) t.textContent = cp < 1 ? "Loading coworkers…" : ex < 2 ? "Loading furniture and people…" : "Almost ready…"; };
   const tip = () => { const el = $("#ldTip"); if (el) el.textContent = pick(LOAD_TIPS); }; tip(); const tipT = setInterval(tip, 3500);
   Promise.all([loadModels(p => { cp = p; bar(); }), loadExtraModels(() => { ex++; bar(); })]).then(go, go);

@@ -1,7 +1,7 @@
 /* =====================================================================
    ONLINE + SAFETY: cloud save (private per player), friends leaderboard
-   (scores only, validated), "ask your mentor" (Claude, on-topic and
-   rate-limited), Claude voice fallback, save validation, name filter,
+   (scores only, validated), "ask your mentor" (AI, on-topic and
+   rate-limited), voice fallback, save validation, name filter,
    play-break reminders. Everything degrades gracefully offline.
    ===================================================================== */
 const Online = { db: null, user: null, uid: null, sample: null, tts: null, ready: false };
@@ -65,7 +65,7 @@ async function postScore() {
   try { await Online.db.collection("leaderboard").doc(Online.uid).set(row); } catch (e) {}
 }
 const plausible = r => r && typeof r === "object" && Number.isFinite(r.xp) && r.xp >= 0 && r.xp <= 200000 && Number.isFinite(r.shifts) && r.shifts <= 20000 && r.xp <= (r.shifts + 1) * 400;
-PHONE.friends = () => `<div id="lbBox"><p>${Online.db ? "Loading the leaderboard…" : "The leaderboard needs you to be signed in to Claude and viewing this game on claude.ai. Your game still works offline."}</p></div>
+PHONE.friends = () => `<div id="lbBox"><p>${Online.db ? "Loading the leaderboard…" : "The online leaderboard isn't available right now. Your game still works offline."}</p></div>
   <label class="set" style="margin-top:8px"><input type="checkbox" id="lbPriv" ${S.safety === "private" ? "checked" : ""}> Keep me off the leaderboard</label>
   <p class="small">Only your in-game name and scores are shared, never personal details. Names are filtered for bad words, and scores that look impossible are hidden.</p>`;
 PHONE_WIRE.friends = async (ov) => {
@@ -83,20 +83,20 @@ PHONE_WIRE.friends = async (ov) => {
   } catch (e) { const box = $("#lbBox", ov); if (box) box.textContent = "Couldn't load the leaderboard right now."; }
 };
 
-/* ---------- ask your mentor anything (Claude), safely ---------- */
+/* ---------- ask your mentor anything (AI), safely ---------- */
 let askLast = 0;
 function openAskMentor(job) {
   job = job || jobById(CUR_JOB) || JOBS[0];
   const ov = overlay(`<div class="panel modal"><div class="bar" style="--blue:${job.color}">Ask ${esc(job.mentor.name)}</div><div class="m-body">
     <div class="chatlog" id="chatlog"></div>
     <div class="row"><input type="text" id="askIn" maxlength="300" placeholder="Ask about this job, a skill, or your career…" autocomplete="off"><button class="btn go" type="button" id="askGo">Ask</button></div>
-    <p class="small">Answers come from Claude playing your mentor, so they can be wrong. Don't share personal information. For emergencies, contact a real adult or emergency services.</p></div></div>`);
+    <p class="small">Answers are AI-generated, so they can be wrong. Don't share personal information. For emergencies, contact a real adult or emergency services.</p></div></div>`);
   const log = $("#chatlog", ov), inp = $("#askIn", ov);
   const add = (who, text) => { const d = document.createElement("div"); d.className = "chat " + who; const b = document.createElement("b"); b.textContent = who === "me" ? "You" : job.mentor.name.split(" ")[0]; const p = document.createElement("span"); p.textContent = text; d.append(b, p); log.appendChild(d); log.scrollTop = log.scrollHeight; return p; };
   add("them", `Hi ${S.player.name.split(" ")[0]}! Ask me anything about working in ${job.dept}.`);
   const go = async () => {
     const q = inp.value.replace(/\s+/g, " ").trim().slice(0, 300); if (!q) return;
-    if (!Online.sample) { add("them", "I can't answer free questions here. This needs the game opened on claude.ai while signed in. Try my hints during tasks!"); return; }
+    if (!Online.sample) { add("them", "I can't answer free questions in this version. Try my hints during tasks!"); return; }
     if (Date.now() - askLast < 4000) { add("them", "One moment, let me finish my last thought!"); return; }
     const today = S.day + ":" + new Date().toDateString(); S.ask = S.ask && S.ask.k === today ? S.ask : { k: today, n: 0 };
     if (S.ask.n >= 40) { add("them", "That's a lot of great questions for one day! Let's pick this up tomorrow."); return; }
