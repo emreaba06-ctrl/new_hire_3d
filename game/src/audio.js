@@ -174,6 +174,7 @@ function openSettings() {
     <div><span class="lbl">Voices</span><div class="seg" id="setVo">${[["real", "Voice actors (ElevenLabs)"], ["babble", "Game babble"], ["off", "Off"]].map(([k, n]) => `<button type="button" data-v="${k}" aria-pressed="${(S.voice || "real") === k}">${n}</button>`).join("")}</div>
     <div class="small">${Voice.canSpeak() && Voice.list.length ? "Real voices use your device's built-in speech voices, so they sound different on every device." : "Your browser has no speech voices, so characters use game babble instead."}</div></div>
     ${Voice.list.length ? `<label class="set">Narrator voice <select id="setVp"><option value="auto">Automatic (best available)</option>${Voice.list.slice(0, 40).map(v => `<option ${S.voicePick === v.name ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select></label><div class="small">Found ${Voice.list.length} voices: ${Voice.f.length} female, ${Voice.m.length} male. For the most natural voices, use Microsoft Edge ("Natural" voices) or download "Enhanced" voices in your phone or computer's speech settings.</div>` : ""}
+    <label class="set"><input type="checkbox" id="setToon" ${S.toon === false ? "" : "checked"}> Stylized look (ink outlines, soft rim light). Applies on the next room you enter.</label>
     <div><span class="lbl">Visual effects</span><div class="seg" id="setFx">${[["auto", "On (glow, color)"], ["ao", "On + soft shadows (experimental)"], ["off", "Off (faster)"]].map(([k, n]) => `<button type="button" data-fx="${k}" aria-pressed="${(S.fx || "auto") === k}">${n}</button>`).join("")}</div></div>
     <div><span class="lbl">Graphics quality</span><div class="seg" id="setGfx">${Object.entries(QUALITY).map(([k, q]) => `<button type="button" data-g="${k}" aria-pressed="${(S.gfx || "hd") === k}">${q.name}</button>`).join("")}</div><div class="small" id="gfxNote">Rendering at ${E.res || ""} pixels. Lower this if the game feels slow.</div></div>
     <label class="set">Voice volume <input type="range" id="setVoV" min="0" max="1" step=".05" value="${S.voiceVol ?? .9}"></label>
@@ -188,6 +189,7 @@ function openSettings() {
   $$("#setGfx button", ov).forEach(b => b.addEventListener("click", () => { S.gfx = b.dataset.g; save(); $$("#setGfx button", ov).forEach(x => x.setAttribute("aria-pressed", String(x === b))); for (const k in UI_TEX) delete UI_TEX[k]; applyQuality(); $("#gfxNote", ov).textContent = `Rendering at ${E.res} pixels. Textures sharpen next time you change rooms.`; }));
   $("#setTest", ov).addEventListener("click", () => { Sfx.init(); Voice.say(`Hi ${S.player ? S.player.name.split(" ")[0] : "there"}! Welcome to Brightline. Ready for your shift?`, "Pat Rivers", 2); });
   $("#setOk", ov).addEventListener("click", () => ov.close());
+  $("#setToon", ov).addEventListener("change", e => { S.toon = e.target.checked; save(); });
   $$("#setFx button", ov).forEach(b => b.addEventListener("click", () => { S.fx = b.dataset.fx; save(); $$("#setFx button", ov).forEach(x => x.setAttribute("aria-pressed", String(x === b))); setupPost(); }));
   $("#setAx", ov).addEventListener("click", () => { ov.close(); openAccess(); });
 }

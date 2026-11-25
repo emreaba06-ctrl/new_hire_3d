@@ -16,7 +16,7 @@ function handsOnFor(job, x) {
   return g;
 }
 /* ---------- juice ---------- */
-function popText(text, cls = "") { const el = document.createElement("div"); el.className = "pop " + cls; el.textContent = text; el.style.top = `calc(38% + ${document.querySelectorAll(".pop").length * 40}px)`; document.body.appendChild(el); setTimeout(() => el.remove(), 1400); }
+function popText(text, cls = "") { const el = document.createElement("div"); el.className = "fxpop " + cls; el.textContent = text; el.style.top = `calc(38% + ${document.querySelectorAll(".fxpop").length * 40}px)`; document.body.appendChild(el); setTimeout(() => el.remove(), 1400); }
 function confetti(n = 40) {
   if (a11y().motion) return; const box = document.createElement("div"); box.className = "confetti"; document.body.appendChild(box);
   for (let i = 0; i < n; i++) { const p = document.createElement("i"); p.style.left = (50 + (Math.random() - .5) * 40) + "%"; p.style.background = pick(["#ffd23f", "#2a7fd4", "#5fb320", "#e74c3c", "#b48cff"]); p.style.setProperty("--dx", ((Math.random() - .5) * 600) + "px"); p.style.setProperty("--dy", (-200 - Math.random() * 300) + "px"); p.style.animationDelay = (Math.random() * .15) + "s"; box.appendChild(p); }

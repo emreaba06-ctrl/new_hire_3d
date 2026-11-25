@@ -51,6 +51,7 @@ function postResize() {
 function renderFrame() {
   if (POST.composer) {
     if (POST.grade) { const night = hourNow() >= 19 || hourNow() < 6; POST.grade.uniforms.uWarm.value = night ? -.02 : S.weather === "rain" ? 0 : .045; POST.grade.uniforms.uSat.value = S.weather === "rain" ? 1.0 : 1.1; }
+    if (typeof toonGrade === "function") toonGrade();
     POST.composer.render();
   } else E.renderer.render(E.scene, E.camera);
 }

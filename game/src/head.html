@@ -218,8 +218,8 @@ body { font-size: 14px; }
 .attendee span { padding: 1px 7px; border-radius: 999px; background: rgba(42,127,212,.08); color: var(--ink); }
 
 /* ===== gameplay juice ===== */
-.pop { position: fixed; left: 50%; top: 38%; transform: translateX(-50%); z-index: 90; font: 800 26px var(--head); color: #fff; text-shadow: 0 3px 10px rgba(0,0,0,.45); pointer-events: none; animation: popup 1.3s ease-out forwards; white-space: nowrap; }
-.pop.good { color: #b7ff7a; } .pop.bad { color: #ff8a80; } .pop.gold { color: #ffd23f; font-size: 34px; }
+.fxpop { position: fixed; left: 50%; top: 38%; transform: translateX(-50%); z-index: 90; font: 800 26px var(--head); color: #fff; text-shadow: 0 3px 10px rgba(0,0,0,.45); pointer-events: none; animation: popup 1.3s ease-out forwards; white-space: nowrap; }
+.fxpop.good { color: #b7ff7a; } .fxpop.bad { color: #ff8a80; } .fxpop.gold { color: #ffd23f; font-size: 34px; }
 @keyframes popup { 0% { opacity: 0; transform: translate(-50%, 12px) scale(.8); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1); } }
 .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 95; overflow: hidden; } .confetti i { position: absolute; top: 55%; width: 9px; height: 14px; border-radius: 2px; animation: conf 1.4s cubic-bezier(.2,.7,.4,1) forwards; }
 @keyframes conf { to { transform: translate(var(--dx), var(--dy)) rotate(540deg); opacity: 0; } }
@@ -241,6 +241,13 @@ body { font-size: 14px; }
 .fx-app { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid #cfd8e3; background: #fff; cursor: pointer; font: 600 13px var(--body); } .fx-app.on { background: #e8f1fd; border-color: var(--blue); }
 .fx-win { border: 1px solid #cfd8e3; border-radius: 10px; padding: 10px; background: #f7f9fc; } .fx-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid #e5eaf0; } .fx-row b.bad { color: var(--bad); }
 .about p { font-size: 15px; line-height: 1.55; margin: 0 0 10px; }
+
+.spot-list, .seq-list { display: grid; gap: 6px; margin: 8px 0; max-height: 46vh; overflow-y: auto; }
+.spot-row, .seq-it, .mt-l, .mt-r { text-align: left; padding: 9px 12px; border-radius: 10px; border: 1px solid #cfd8e3; background: #fff; cursor: pointer; font: 13px var(--mono); transition: background .12s, transform .12s; }
+.seq-it, .mt-l, .mt-r { font: 600 13px var(--body); } .spot-row:hover, .seq-it:hover, .mt-l:hover, .mt-r:hover { background: #eef5ff; }
+.spot-row.hit, .seq-it.hit, .mt-l.hit, .mt-r.hit { background: #e3f6dc; border-color: #5fb320; } .spot-row.miss { background: #fde7e5; border-color: #d6342c; } .spot-row.missed { outline: 2px dashed #d6342c; }
+.seq-it.hit::before { content: attr(data-n) ". "; font-weight: 800; color: #2f9e2f; }
+.match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0; } .match-grid > div { display: grid; gap: 6px; } .mt-l.sel { background: #e8f1fd; border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue) inset; }
 </style>
 
 <canvas id="stage" aria-label="3D office"></canvas>
