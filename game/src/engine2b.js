@@ -244,17 +244,19 @@ function updateCamera(dt) {
   if (!Player.mesh) return;
   const p = Player.mesh.position;
   if (E.orbit) {
-    const a = E.t * .15; E.camera.position.set(p.x + Math.sin(a) * 4.2, 2.1, p.z + Math.cos(a) * 4.2); E.camera.lookAt(p.x, 1.35, p.z);
+    if (LOC === "title") { const a = E.t * .06; E.camera.position.set(p.x + Math.sin(a) * 7.5, 2.4 + Math.sin(E.t * .1) * .5, p.z + Math.cos(a) * 7.5); E.camera.lookAt(p.x, 1.5, p.z); }
+    else { const a = E.t * .15; E.camera.position.set(p.x + Math.sin(a) * 4.2, 2.1, p.z + Math.cos(a) * 4.2); E.camera.lookAt(p.x, 1.35, p.z); }
     animPerson(Player.mesh, "idle", dt, false);
   } else {
     const bob = E.moving && !document.body.classList.contains("calm") ? Math.sin(E.bob) * .035 : 0;
     E.camY = (E.camY ?? 1.62) + (((E.seated ? 1.22 : 1.62) + bob) - (E.camY ?? 1.62)) * Math.min(1, dt * 6);
     E.camera.position.set(p.x, E.camY, p.z);
     E.camera.rotation.order = "YXZ"; E.camera.rotation.set(E.pitch, E.yaw, 0);
+    if (E.third && !E.seated && !E.uiOpen) { const back = V3(Math.sin(E.yaw), 0, Math.cos(E.yaw)); let dist = 2.6; for (let k = 2.6; k > .6; k -= .2) { const cx = p.x + back.x * k, cz = p.z + back.z * k; if (!blockedAt(cx, cz, .15) && Math.abs(cx) < E.room.W / 2 - .3 && Math.abs(cz) < E.room.D / 2 - .3) { dist = k; break; } dist = k; } E.camera.position.set(p.x + back.x * dist, E.camY + .35, p.z + back.z * dist); Player.mesh.visible = true; Player.mesh.rotation.y = E.yaw + Math.PI; animPerson(Player.mesh, E.moving ? "walk" : "idle", dt, false); }
     if (E.hands) { const u = E.hands.userData, sw = E.moving ? Math.sin(E.bob) : 0, wv = clamp(1 - (E.t - (E.wave || -9)) * 1.6, 0, 1);
       E.hands.visible = !E.uiOpen; u.R.position.set(.27, -.3 + Math.abs(sw) * .02 + wv * .14, -.5 + sw * .02); u.L.position.set(-.27, -.31 + Math.abs(sw) * .02, -.5 - sw * .02); u.R.rotation.z = wv * Math.sin(E.t * 14) * .4; u.R.rotation.x = -.15 + wv * .6; }
   }
-  if (E.hands && (E.orbit || E.uiOpen)) E.hands.visible = false;
+  if (E.hands && (E.orbit || E.uiOpen || E.third)) E.hands.visible = false;
   const camDir = V3(E.camera.position.x - p.x, 0, E.camera.position.z - p.z).normalize();
   for (const w of E.walls) { const want = E.orbit && w.normal.dot(camDir) > .3 ? .1 : 1; w.h += (want - w.h) * Math.min(1, dt * 6); w.g.scale.y = w.h; }
   if (E.ceil) E.ceil.visible = !E.orbit || E.camera.position.y < (E.room.H || 3.2);

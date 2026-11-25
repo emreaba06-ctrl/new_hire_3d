@@ -139,7 +139,7 @@ function goLocation(loc, opts = {}) {
     else if (loc === "garage") buildGarage(opts);
     else if (loc === "street") buildStreet(opts);
     if (loc === "cafe" && opts.party) partyDecor(opts.party);
-    decorate(); lobbySecret(); livingReset(); declutter();
+    decorate(); lobbySecret(); livingReset(); declutter(); feelOnLocation(loc, opts);
     if (S.partyPending === S.day && S.phase === "evening" && loc !== "cafe" && loc !== "home" && holiday()) { S.partyPending = 0; setTimeout(() => offerParty(holiday()), 1200); }
     setLighting(hourNow(), S.weather); hud(); hudTick(); Voice.stop(); Music.play(musicFor());
     if (opts.fromElevator || loc === "floor") { Sfx.tone(1318, .5, "sine", .05); Sfx.tone(1046, .7, "sine", .045, .32); }
@@ -189,7 +189,7 @@ function buildHome(o) {
   const pc = PROP.desk(-W / 2 + 1.6, D / 2 - 1.6, Math.PI, { screen: "#5fb320", top: "#c9b08a" }); addInter({ name: "Home computer", verb: S.phase === "evening" ? "Use your computer (side hustles, shop)" : isWfh() && !S.workedToday ? "Work from home today" : "Use your computer (shop, skills, goals)", x: -W / 2 + 1.6, z: D / 2 - 1.6, r: 1.8, mesh: pc.g, action: () => isWfh() && !S.workedToday ? openWfh() : S.phase === "evening" ? openHustles() : openPhone("shop") });
   const mx = W / 2 - 3.3; PROP.mirror(mx, -D / 2 + .2, 0); addInter({ name: "Mirror", verb: "Wardrobe and looks", x: mx, z: -D / 2 + 1.2, r: 1.5, action: () => openWardrobe() });
   PROP.clock(-W / 2 + .2, -1.8, Math.PI / 2, 2.2, .26);
-  PROP.trophyShelf(W / 2 - 2.6, D / 2 - .3, Math.PI, Object.keys(S.ach).length); addInter({ name: `Trophies (${Object.keys(S.ach).length})`, verb: "Look at your trophies", x: W / 2 - 2.6, z: D / 2 - 1.2, r: 1.6, h: 2.4, action: () => openPhone("ach") });
+  PROP.trophyShelf(W / 2 - 2.6, D / 2 - .6, Math.PI, Object.keys(S.ach).length); addInter({ name: `Trophies (${Object.keys(S.ach).length})`, verb: "Look at your trophies", x: W / 2 - 2.6, z: D / 2 - 1.2, r: 1.6, h: 2.4, action: () => openPhone("ach") });
   furnish("home", W, D, { tier }); spawnPet();
   spawnPlayer(W / 2 - 1.6, -D / 2 + 2, -Math.PI / 4);
   if (o.morningEvent) setTimeout(morningEvent, 600);
@@ -368,7 +368,7 @@ function openElevator() {
     if (f === "cafe") { Sfx.tone(988, .3, "sine", .05); return goCafe(); }
     if (SH) { SH = null; toast("You left your shift. No pay today."); S.workedToday = true; S.phase = "evening"; save(); }
     Sfx.tone(988, .3, "sine", .05); Sfx.tone(784, .4, "sine", .05, .25);
-    rideTalk(() => { if (f === "roof") goLocation("roof", { fromElevator: true, text: "Rooftop Garden" }); else if (f === "lobby") goLocation("lobby", { fromElevator: true, text: "Going down..." }); else goLocation("floor", { job: f, text: `Floor ${jobById(f).floor}: ${jobById(f).dept}` }); });
+    rideTalk(() => elevatorRide(f === "roof" ? "R" : f === "lobby" ? "G" : jobById(f).floor, () => { if (f === "roof") goLocation("roof", { fromElevator: true, text: "Rooftop Garden" }); else if (f === "lobby") goLocation("lobby", { fromElevator: true, text: "Going down..." }); else goLocation("floor", { job: f, text: `Floor ${jobById(f).floor}: ${jobById(f).dept}` }); }));
   }));
   $("[data-x]", ov).addEventListener("click", () => ov.close());
 }
@@ -463,7 +463,7 @@ function resolveTask(x, ok) {
   }
 }
 function tick(dt) {
-  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt); tutTick(dt); if (LOC !== "title") personalSpace();
+  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt); tutTick(dt); if (LOC !== "title") personalSpace(); feelTick(dt);
   if (E.F && LOC === "floor") lifeTick(dt);
   E.lightT = (E.lightT || 0) + dt; if (E.lightT > 1) { E.lightT = 0; if (LOC !== "title") setLighting(hourNow(), S.weather); if (CUR_JOB && THEMES[CUR_JOB] && THEMES[CUR_JOB].dim) E.hemi.intensity = .55; hudTick(); if (Music.out && Music.cur && musicFor() !== Music.want) Music.play(musicFor()); }
   const c = !E.uiOpen && LOC !== "title" ? candidates() : null; const pr = $("#prompt");
@@ -741,7 +741,7 @@ function openTraining() {
 /* ---------- phone / home computer ---------- */
 function openPhone(tab = "shop", jobId) {
   S.tutPhone = true;
-  const tabs = [["shop", "Shop"], ["skills", "Skills"], ["ach", "Trophies"], ["career", "Career"], ["tracks", "Goals"], ["story", "Story"], ["report", "Report"], ["journal", "Journal"], ["words", "Glossary"], ["budget", "Budget"], ["biz", "Business"], ["stickers", "Stickers"], ["friends", "Leaderboard"]];
+  const tabs = [["shop", "Shop"], ["skills", "Skills"], ["ach", "Trophies"], ["career", "Career"], ["tracks", "Goals"], ["story", "Story"], ["map", "Map"], ["report", "Report"], ["journal", "Journal"], ["words", "Glossary"], ["budget", "Budget"], ["biz", "Business"], ["stickers", "Stickers"], ["friends", "Leaderboard"]];
   const ov = overlay(`<div class="panel modal wide phone"><div class="bar">Brightline Phone<span class="dots"><i></i><i></i><i></i></span></div><div class="tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" role="tab" data-t="${k}" aria-selected="${k === tab}">${n}</button>`).join("")}</div><div class="m-body" id="pb"></div></div>`);
   const draw = t => { tab = t; $$(".tabs button", ov).forEach(b => b.setAttribute("aria-selected", String(b.dataset.t === t))); $("#pb", ov).innerHTML = PHONE[t](jobId); PHONE_WIRE[t] && PHONE_WIRE[t](ov, () => draw(t)); };
   $$(".tabs button", ov).forEach(b => b.addEventListener("click", () => { draw(b.dataset.t); Sfx.click(); }));
@@ -834,6 +834,6 @@ function boot() {
   const tip = () => { const el = $("#ldTip"); if (el) el.textContent = pick(LOAD_TIPS); }; tip(); const tipT = setInterval(tip, 3500);
   Promise.all([loadModels(p => { cp = p; bar(); }), loadExtraModels(() => { ex++; bar(); })]).then(go, go);
   setTimeout(go, 45000);
-  initOnline();
+  initOnline(); autoDetectGfx();
 }
 window.__nh = { JOBS, plain, genderFor, get models() { return modelsReady; }, Music, Voice, get S() { return S; }, get SH() { return SH; }, E, Player, goLocation, startShift, jobById, interactWith, openShiftTask, endShift, nextDay, openPhone, openTraining, openDaily, openAskMentor: (...a) => openAskMentor(...a), validateSave: o => validateSave(o), openElevator, get LOC() { return LOC; }, openMenuNow: () => openMenu(todaysMenu()), openRaise: j => openRaise(j), afterShift: (...a) => afterShift(...a), jobState, openWfh: () => openWfh(), adoptPet: id => adoptPet(PETS.find(p => p.id === id)), rideTalk: f => rideTalk(f), openInterview: (j, f) => openInterview(j, f), startEvent: ev => startEvent(ev), openHustles: () => openHustles(), storyCheck: () => storyCheck(), bizDay: () => bizDay(), openEndless: () => openEndless(), get DECL() { return DECL; }, offerParty: h => offerParty(h), openWardrobe: () => openWardrobe(), updateNPC: (n, dt) => updateNPC(n, dt), tick: dt => tick(dt), get POST() { return POST; }, debugGfx: (g, lines) => { if (lines !== undefined) QUALITY[g].lines = lines; S.gfx = g; applyQuality(); } };

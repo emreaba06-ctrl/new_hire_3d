@@ -38,7 +38,7 @@ function playSpot(job, x, end) {
     const acc = clamp(found / need - wrong * .15, 0, 1), secs = (performance.now() - t0) / 1000;
     const body = $(".m-body", ov); const why = document.createElement("div"); why.className = "lesson"; why.textContent = set.why; body.appendChild(why);
     const after = taskOk => { ov.close(); end({ ok: taskOk && acc >= .5, score: clamp(acc * .6 + (taskOk ? .4 : 0), 0, 1), needsTask: x.t.type !== "choice", line: acc >= .9 ? "Nothing gets past you!" : acc >= .5 ? "Most issues caught." : "Several problems slipped through.", stats: [["found", `${found}/${need}`], ["wrong clicks", wrong], ["seconds", Math.round(secs)]] }); };
-    setTimeout(() => { if (x.t.type === "choice") { const q = document.createElement("div"); body.appendChild(q); q.scrollIntoView({ block: "nearest" }); embeddedChoice(q, x.t, { who: x.t.from[0] }, after); } else after(true); }, 900); }
+    setTimeout(() => { if (x.t.type === "choice") { $$(".spot-list, .seq-list, .match-grid", ov).forEach(el => el.hidden = true); const q = document.createElement("div"); body.appendChild(q); q.scrollIntoView({ block: "nearest" }); embeddedChoice(q, x.t, { who: x.t.from[0] }, after); } else after(true); }, 900); }
 }
 
 const MATCH_SETS = {
@@ -55,7 +55,7 @@ function playMatch(job, x, end) {
     else { bad++; b.classList.add("wrongflash"); setTimeout(() => b.classList.remove("wrongflash"), 300); Sfx.bad(); } }); });
   function finish() { const acc = clamp(1 - bad * .15, 0, 1), secs = (performance.now() - t0) / 1000, body = $(".m-body", ov); const why = document.createElement("div"); why.className = "lesson"; why.textContent = set.why; body.appendChild(why);
     const after = taskOk => { ov.close(); end({ ok: taskOk, score: clamp(acc * .6 + (taskOk ? .4 : 0), 0, 1), needsTask: x.t.type !== "choice", line: bad ? "All matched, with a few mix-ups." : "Perfect matching!", stats: [["mix-ups", bad], ["seconds", Math.round(secs)]] }); };
-    setTimeout(() => { if (x.t.type === "choice") { const q = document.createElement("div"); body.appendChild(q); embeddedChoice(q, x.t, { who: x.t.from[0] }, after); } else after(true); }, 800); }
+    setTimeout(() => { if (x.t.type === "choice") { $$(".spot-list, .seq-list, .match-grid", ov).forEach(el => el.hidden = true); const q = document.createElement("div"); body.appendChild(q); embeddedChoice(q, x.t, { who: x.t.from[0] }, after); } else after(true); }, 800); }
 }
 
 const SEQ_SETS = {
@@ -69,7 +69,7 @@ function playSeq(job, x, end) {
   $$(".seq-it", ov).forEach((b, i) => { b.textContent = items[i]; b.addEventListener("click", () => { if (b.disabled) return; if (items[i] === set.steps[k]) { k++; b.disabled = true; b.dataset.n = k; b.classList.add("hit"); Sfx.tick(); if (k === set.steps.length) setTimeout(finish, 400); } else { err++; b.classList.add("wrongflash"); setTimeout(() => b.classList.remove("wrongflash"), 300); Sfx.bad(); popText("Not yet", "bad"); } }); });
   function finish() { const acc = clamp(1 - err * .15, 0, 1), secs = (performance.now() - t0) / 1000, body = $(".m-body", ov); const why = document.createElement("div"); why.className = "lesson"; why.textContent = set.why; body.appendChild(why); popText(err ? "Done" : "Perfect order!", "good");
     const after = taskOk => { ov.close(); end({ ok: taskOk && acc >= .4, score: clamp(acc * .6 + (taskOk ? .4 : 0), 0, 1), needsTask: x.t.type !== "choice", line: err ? `Sorted with ${err} wrong pick${err > 1 ? "s" : ""}.` : "Flawless order!", stats: [["wrong picks", err], ["seconds", Math.round(secs)]] }); };
-    setTimeout(() => { if (x.t.type === "choice") { const q = document.createElement("div"); body.appendChild(q); embeddedChoice(q, x.t, { who: x.t.from[0] }, after); } else after(true); }, 800); }
+    setTimeout(() => { if (x.t.type === "choice") { $$(".spot-list, .seq-list, .match-grid", ov).forEach(el => el.hidden = true); const q = document.createElement("div"); body.appendChild(q); embeddedChoice(q, x.t, { who: x.t.from[0] }, after); } else after(true); }, 800); }
 }
 { const run = runHandsOn; runHandsOn = function (kind, job, x, finish) { if (kind === "spot" || kind === "match" || kind === "seq") { x.playing = true; PLAY.active = { kind, x };
     const end = res => { x.playing = false; PLAY.active = null; const wrap = () => playResult(job, x, res, () => finish(res.ok, res.score));
