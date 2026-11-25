@@ -152,9 +152,9 @@ function buildLobby(o) {
   CUR_JOB = null; const W = 26, D = 20; E.weather = S.weather; buildRoom(W, D, "marble", null, "#e8edf3", { southWindows: true });
   elevator(-D / 2); addInter({ name: "Elevator", verb: "Ride the elevator", x: 0, z: -D / 2 + 1.4, r: 2, h: 3.2, action: openElevator });
   const rd = group(0, 1.2); box(rd, 4.4, 1.1, 1, "#1d1f24", 0, 0, 0, { m: { rough: .4 } }); box(rd, 4.42, .5, 1.02, "#9a6b44", 0, 0, 0, { m: { rough: .6 } }); box(rd, 4.6, .08, 1.1, "#2b2e33", 0, 1.1, 0, { m: { rough: .3 } }); collider(0, 1.2, 4.6, 1.1);
-  box(rd, .6, .4, .05, "#20252c", -1, 1.18, -.2); box(rd, .2, .12, .14, "#2b2f36", 1.2, 1.18, 0);
-  PROP.chair(group(0, .35, 0), 0, 0, "#2f4a6d");
-  const pat = addNPC({ kind: "reception", name: "Pat Rivers", role: "Receptionist", look: lookFor("Pat Rivers"), x: 0, z: .35, ry: 0, sit: true });
+  box(rd, 4.2, .05, .5, "#9a6b44", 0, .72, -.72, { m: { rough: .5 } }); for (const sx of [-2, 2]) box(rd, .06, .72, .45, "#1d1f24", sx, 0, -.72); box(rd, .55, .34, .04, "#20252c", -.2, .98, -.82); box(rd, .08, .2, .08, "#2b2f36", -.2, .77, -.82); box(rd, .45, .02, .15, "#2b2f36", -.2, .775, -.62); box(rd, .2, .12, .14, "#2b2f36", 1.2, 1.18, 0);
+  PROP.chair(group(-.2, -.05, 0), 0, 0, "#2f4a6d");
+  const pat = addNPC({ kind: "reception", name: "Pat Rivers", role: "Receptionist", look: lookFor("Pat Rivers"), x: -.2, z: -.05, ry: 0, sit: true });
   pat.onTalk = n => npcSay(n, pick([`Morning, ${S.player.name.split(" ")[0]}! It's ${WEATHER_TXT[S.weather].toLowerCase()} out.`, "The daily challenge kiosk has a new puzzle today.", "Training Center is through the door on the left.", "The elevator takes you to every department.", "Rumor is the CEO walks the floors on Fridays.", S.workedToday ? "Long day? The exit's behind you." : "Pick a floor and clock in when you're ready."]), 5);
   PROP.clock(-2.9, -D / 2 + .2, 0, 2.3, .38);
   PROP.board(-6.5, -D / 2 + .2, 0, ["BRIGHTLINE CORP", "Every job starts on day one"], { w: 4.4, h: 1.5, bg: "#1b5ea6", fg: "#fff" });
@@ -187,9 +187,9 @@ function buildHome(o) {
   if (tier >= 4) { PROP.sofa(2.4, 3, Math.PI, "#2c3e50", 3); PROP.plant(W / 2 - .8, -D / 2 + .8, 1.4); PROP.board(3, -D / 2 + .2, 0, ["SKYLINE"], { w: 3.6, h: 1.4, bg: "#1d2b4f", fg: "#ffd23f" }); }
   addInter({ name: tier === 0 ? "Couch" : "Bed", verb: "Sleep (end the day)", x: -W / 2 + (tier === 0 ? 2 : 1.6), z: -D / 2 + 1.4, r: 2, mark: () => S.phase === "evening" ? "z" : "", action: sleep });
   const pc = PROP.desk(-W / 2 + 1.6, D / 2 - 1.6, Math.PI, { screen: "#5fb320", top: "#c9b08a" }); addInter({ name: "Home computer", verb: S.phase === "evening" ? "Use your computer (side hustles, shop)" : isWfh() && !S.workedToday ? "Work from home today" : "Use your computer (shop, skills, goals)", x: -W / 2 + 1.6, z: D / 2 - 1.6, r: 1.8, mesh: pc.g, action: () => isWfh() && !S.workedToday ? openWfh() : S.phase === "evening" ? openHustles() : openPhone("shop") });
-  const mx = W / 2 - .2; PROP.mirror(mx, D / 2 - 2, -Math.PI / 2); addInter({ name: "Mirror", verb: "Wardrobe and looks", x: mx - 1, z: D / 2 - 2, r: 1.5, action: () => openWardrobe() });
+  const mx = W / 2 - 3.3; PROP.mirror(mx, -D / 2 + .2, 0); addInter({ name: "Mirror", verb: "Wardrobe and looks", x: mx, z: -D / 2 + 1.2, r: 1.5, action: () => openWardrobe() });
   PROP.clock(-W / 2 + .2, -1.8, Math.PI / 2, 2.2, .26);
-  PROP.trophyShelf(-W / 2 + .3, .6, Math.PI / 2, Object.keys(S.ach).length); addInter({ name: `Trophies (${Object.keys(S.ach).length})`, verb: "Look at your trophies", x: -W / 2 + 1.2, z: .6, r: 1.6, h: 2.4, action: () => openPhone("ach") });
+  PROP.trophyShelf(W / 2 - 2.6, D / 2 - .3, Math.PI, Object.keys(S.ach).length); addInter({ name: `Trophies (${Object.keys(S.ach).length})`, verb: "Look at your trophies", x: W / 2 - 2.6, z: D / 2 - 1.2, r: 1.6, h: 2.4, action: () => openPhone("ach") });
   furnish("home", W, D, { tier }); spawnPet();
   spawnPlayer(W / 2 - 1.6, -D / 2 + 2, -Math.PI / 4);
   if (o.morningEvent) setTimeout(morningEvent, 600);

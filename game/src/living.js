@@ -23,7 +23,8 @@ function routeTo(from, to) {
   return [to];
 }
 function spawnGuest() {
-  if (!E.F || LOC !== "floor" || !E.room) return; const D = E.room.D; const type = pick(GUEST_TYPES); const nm = `${pick(FIRST)} ${pick(LAST)}`;
+  if (!E.F || LOC !== "floor" || !E.room) return; const D = E.room.D;
+  if (E.npcs.some(m => Math.hypot(m.mesh.position.x, m.mesh.position.z - (-D / 2 + .9)) < 1.8)) { GUESTS.next = 4; return; } const type = pick(GUEST_TYPES); const nm = `${pick(FIRST)} ${pick(LAST)}`;
   const n = addNPC({ kind: "guest", name: nm, role: type.role, look: lookFor(nm), x: 0, z: -D / 2 + .9, ry: 0 }); n.speed = 1.6 + Math.random() * .5;
   E.elevOpenUntil = E.t + 2.2; GUESTS.list.push(n);
   if (type.carry) { const b = new THREE.Mesh(bgeo(.35, .25, .3), mat(type.carry)); b.position.set(0, 1, .28); n.mesh.add(b); }

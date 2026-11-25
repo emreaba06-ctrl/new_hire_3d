@@ -32,7 +32,7 @@ function setupPost() {
     const rt = r.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget ? new THREE.WebGLMultisampleRenderTarget(size.x * pr, size.y * pr, rtOpts) : new THREE.WebGLRenderTarget(size.x * pr, size.y * pr, rtOpts);
     if (rt.samples !== undefined) rt.samples = 4;
     const comp = new THREE.EffectComposer(r, rt); comp.setPixelRatio(pr); comp.setSize(size.x, size.y);
-    if (lvl >= 2 && THREE.SSAOPass) {
+    if (lvl >= 2 && THREE.SSAOPass && S.fx === "ao") {
       const s = new THREE.SSAOPass(E.scene, E.camera, size.x, size.y);
       s.kernelRadius = .8; s.minDistance = .0004; s.maxDistance = .04; s.normalMaterial.skinning = true;
       comp.addPass(s); POST.ssao = s;

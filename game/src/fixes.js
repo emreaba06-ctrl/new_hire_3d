@@ -20,7 +20,9 @@ function npcStep(n, p, prev) {
   if (n.life === "wanderFree" && blockedAt(p.x, p.z, .25)) { p.copy(prev); n.path = []; n.next = .5; return; }
   for (const m of E.npcs) {
     if (m === n) continue; const q = m.mesh.position, dx = p.x - q.x, dz = p.z - q.z, d = Math.hypot(dx, dz), r = m.mode === "sit" || m.mode === "type" ? .45 : .55;
-    if (d < r && d > 1e-4) { const nx = q.x + dx / d * r, nz = q.z + dz / d * r; if (n.life !== "wanderFree" || !blockedAt(nx, nz, .25)) { p.x = nx; p.z = nz; } }
+    if (d < r && d > 1e-4) { const idle = !m.path.length && m.mode !== "sit" && m.mode !== "type" && m.kind !== "mentor" && m.kind !== "reception";
+      if (idle) { const mx = q.x - dx / d * .03, mz = q.z - dz / d * .03; if (!blockedAt(mx, mz, .25)) { q.x = mx; q.z = mz; } }
+      const nx = q.x + dx / d * r, nz = q.z + dz / d * r; if (n.life !== "wanderFree" || !blockedAt(nx, nz, .25)) { p.x = nx; p.z = nz; } }
   }
 }
 /* pets also avoid furniture */

@@ -137,7 +137,7 @@ function setLighting(hour, weather) {
   E.hemi.intensity = (night ? .16 : .3) * (rain ? .85 : 1); (E.lamps || []).forEach(l => l.intensity = night ? 1.1 : .85);
   E.scene.environment && (E.envLevel = night ? .35 : .8);
   (E.cityMats || []).forEach(m => m.emissiveIntensity = night ? 1.2 : dusk ? .5 : 0);
-  if (E.beamMat) E.beamMat.opacity = night || rain ? 0 : (cloud ? .03 : .085) * (1 - Math.abs(k - .5) * .6);
+  if (E.beamMat) E.beamMat.opacity = night || rain ? 0 : (cloud ? .008 : .022) * (1 - Math.abs(k - .5) * .6);
   (E.ceilLights || []).forEach(m => m.color.copy(lin(night ? "#ffe9b8" : "#e4ebf2")));
   E.weather = weather;
 }
