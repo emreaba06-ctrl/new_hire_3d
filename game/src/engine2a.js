@@ -194,8 +194,9 @@ function buildRoom(W, D, floorKind, floorColor, wallColor, o = {}) {
   const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, D), fm); fl.rotation.x = -Math.PI / 2; fl.receiveShadow = true; fl.userData.floor = true; E.world.add(fl); E.clickables.push(fl); E.floor = fl;
   const ct = floorTex("ceiling"); ct.repeat.set(W / 4, D / 4);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })); ceil.rotation.x = Math.PI / 2; ceil.position.y = H; E.world.add(ceil); E.ceil = ceil;
+  E.ceilFix = [];
   const lm = new THREE.MeshBasicMaterial({ color: lin("#fff1d6") }); E.ceilLights.push(lm); const housing = mat("#8f8a80", { rough: .5, metal: .3 });
-  for (let x = -W / 2 + 4; x <= W / 2 - 3.5; x += 6) for (let z = -D / 2 + 2.5; z <= D / 2 - 2; z += 3.4) { const hs = new THREE.Mesh(bgeo(3.6, .07, .34), housing); hs.position.set(x, H - .035, z); E.world.add(hs); const l = new THREE.Mesh(bgeo(3.4, .02, .22), lm); l.position.set(x, H - .075, z); E.world.add(l); }
+  for (let x = -W / 2 + 4; x <= W / 2 - 3.5; x += 6) for (let z = -D / 2 + 2.5; z <= D / 2 - 2; z += 3.4) { const hs = new THREE.Mesh(bgeo(3.6, .07, .34), housing); hs.position.set(x, H - .035, z); E.world.add(hs); const l = new THREE.Mesh(bgeo(3.4, .02, .22), lm); l.position.set(x, H - .075, z); E.world.add(l); E.ceilFix.push(hs, l); }
   E.lamps = [];
   if (!o.noLamps) for (const x of [-W / 4, W / 4]) for (const z of [-D / 4, D / 5]) { const pl = new THREE.PointLight(0xffd9a6, .55, 16, 2); pl.position.set(x, H - .4, z); E.world.add(pl); E.lamps.push(pl); }
   E.windowMat = new THREE.MeshStandardMaterial({ color: lin("#bfe0ff"), transparent: true, opacity: .22, roughness: .05, metalness: .2, depthWrite: false });

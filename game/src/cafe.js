@@ -51,7 +51,7 @@ function buildCafe() {
     p.mode = p.home.mode = "sit";
     p.onTalk = who => cafeChat(who, job);
   }
-  furnish("training", W, D);
+  furnish("training", W, D); styleCafe();
   spawnPlayer(0, -D / 2 + 2.6, 0);
   setTimeout(() => { if (LOC !== "cafe") return; if (busy) npcSay(cook, "Lunch is served! Come grab a tray.", 5); else if (!E.partyOn) toast("The cafeteria is quiet right now. The lunch rush is at 12:00 during your shift."); }, 900);
 }

@@ -151,7 +151,7 @@ function sky(hour) { setLighting(hour, S.weather); }
 function buildLobby(o) {
   CUR_JOB = null; const W = 26, D = 20; E.weather = S.weather; buildRoom(W, D, "marble", null, "#e8edf3", { southWindows: true });
   elevator(-D / 2); addInter({ name: "Elevator", verb: "Ride the elevator", x: 0, z: -D / 2 + 1.4, r: 2, h: 3.2, action: openElevator });
-  const rd = group(0, 1.2); box(rd, 4.4, 1.1, 1, "#f4f6f8", 0, 0, 0, { m: { shininess: 80 } }); box(rd, 4.6, .08, 1.1, "#8a5a3b", 0, 1.1, 0); collider(0, 1.2, 4.6, 1.1);
+  const rd = group(0, 1.2); box(rd, 4.4, 1.1, 1, "#1d1f24", 0, 0, 0, { m: { rough: .4 } }); box(rd, 4.42, .5, 1.02, "#9a6b44", 0, 0, 0, { m: { rough: .6 } }); box(rd, 4.6, .08, 1.1, "#2b2e33", 0, 1.1, 0, { m: { rough: .3 } }); collider(0, 1.2, 4.6, 1.1);
   box(rd, .6, .4, .05, "#20252c", -1, 1.18, -.2); box(rd, .2, .12, .14, "#2b2f36", 1.2, 1.18, 0);
   PROP.chair(group(0, .35, 0), 0, 0, "#2f4a6d");
   const pat = addNPC({ kind: "reception", name: "Pat Rivers", role: "Receptionist", look: lookFor("Pat Rivers"), x: 0, z: .35, ry: 0, sit: true });
@@ -168,7 +168,7 @@ function buildLobby(o) {
   PROP.sofa(-9, -3, Math.PI / 2, "#c0392b"); PROP.sofa(-9, 1, Math.PI / 2, "#c0392b"); PROP.plant(-11.8, -8.6, 1.3); PROP.plant(11.8, -8.6, 1.3); PROP.plant(-11.8, 8.6, 1.2); PROP.plant(11.8, 8.6, 1.2); PROP.cooler(-9, 8.6); PROP.rug(0, 5.2, 6, 4, "#b03a3a");
   const guard = addNPC({ kind: "npc", name: "Officer Diaz", role: "Security", look: lookFor("Officer Diaz"), x: W / 2 - 2.2, z: 8.8, ry: -Math.PI / 2 }); guard.onTalk = n => npcSay(n, pick(["Badge looks good. Have a great day!", "Remember: don't hold the door for strangers. That's called tailgating.", "Saw someone try to sneak in yesterday. Security matters at every level."]));
   for (let i = 0; i < 2; i++) { const nm = `${pick(FIRST)} ${pick(LAST)}`; const v = addNPC({ kind: "npc", name: nm, role: "Visitor", look: lookFor(nm), x: -4 + i * 8, z: -4 }); wander(v, [[-6, -5], [6, -5], [5, 6], [-6, 6], [0, -7]]); }
-  furnish("lobby", W, D);
+  furnish("lobby", W, D); styleLobby();
   spawnPlayer(o.fromElevator ? 0 : W / 2 - 2, o.fromElevator ? -D / 2 + 1.8 : 7, o.fromElevator ? 0 : -Math.PI / 2);
   if (o.fromElevator) E.elevOpenUntil = E.t + 2.5;
  
@@ -273,7 +273,7 @@ function buildFloor(job, o) {
   }
   // your desk
   const pd = PROP.desk(0, 7.2, Math.PI, { phone: true, screen: job.color, chair: SHIRTS[S.player.look.shirt] });
-  deptSignature(job, lay, W, D, F);
+  deptSignature(job, lay, W, D, F); applyDeptStyle(job, lay, W, D, F);
   PROP.myCubicle(0, 8.55, th.panel ? shade(th.panel, -.05) : "#6b4f3a"); PROP.clutter(pd.g, 1); PROP.clutter(pd.g, -1); collider(0, 8.55, 2.7, .2);
   PROP.clock(4.2, -D / 2 + .2, 0); PROP.cork(-W / 2 + .2, -6, Math.PI / 2); if (lay === "office") PROP.cork(-W / 2 + .2, 0.5, Math.PI / 2, 1.75, 1.5, .9);
   decorateDesk(pd.g); F.desk = pd; F.deskPos = V3(0, 0, 7.2);

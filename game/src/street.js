@@ -18,7 +18,7 @@ function buildStreet(o = {}) {
   const tw = new THREE.Mesh(bgeo(18, 26, 4), glass); tw.position.y = 13; tower.add(tw);
   for (let y = 3.2; y < 26; y += 3.2) box(tower, 18.1, .12, 4.1, "#d9dde3", 0, y, 0);
   for (let x = -9; x <= 9; x += 1.8) box(tower, .1, 26, 4.1, "#d9dde3", x, 0, 0);
-  box(tower, 18.4, .5, 4.4, "#20252c", 0, 0, 0);
+  box(tower, 18.4, .5, 4.4, "#20252c", 0, 0, 0); styleTowerFloors(tower); streetBuildings();
   const sign = new THREE.Mesh(bgeo(8, 1.2, .1), new THREE.MeshBasicMaterial({ map: textTex(["BRIGHTLINE CORP"], { w: 1024, h: 160, bg: "#1b5ea6", fg: "#fff", size: 96, top: 80 }) })); sign.material.userData.own = true; sign.position.set(0, 4.4, 2.08); tower.add(sign);
   const door = new THREE.Group(); door.position.set(0, 0, 2.1); tower.add(door); box(door, 3.2, 3, .2, "#1b2433", 0, 0, 0); const dg = new THREE.Mesh(bgeo(2.8, 2.6, .05), glass); dg.position.set(0, 1.4, .12); door.add(dg);
   box(door, 4, .15, 1.6, "#9aa4b0", 0, 3.05, .8);

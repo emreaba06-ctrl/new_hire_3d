@@ -37,7 +37,7 @@ const GEN = {
     const seams = [.13, .61, .37, .86];
     return (u, v) => { const p = Math.floor(v * 4), pv = v * 4 - p, tone = .82 + r(p / 64, .5) * .3;
       const g = fbm(grain, u * .5 + p * .27, v * 2), ring = .5 + .5 * Math.sin((v * 4 + g * 3.2) * 38 + u * 6), f = fbm(fine, u, v);
-      let k = tone * (.84 + ring * .16) * (.94 + f * .1); let h = .55 + ring * .08 + f * .05;
+      let k = tone * (.91 + ring * .07) * (.95 + f * .08); let h = .55 + ring * .08 + f * .05;
       const seamU = Math.abs(((u - seams[p] + 1) % 1)), edge = Math.min(pv, 1 - pv);
       if (edge < .025 || seamU < .006) { k *= .55; h = .1; }
       return [...shadeRGB(base, k), h]; };
