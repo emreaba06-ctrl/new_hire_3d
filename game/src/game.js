@@ -88,6 +88,7 @@ function setupHud() {
   $("#muteB").addEventListener("click", () => { Sfx.init(); openSettings(); });
   $("#phoneB").addEventListener("click", () => openPhone());
   $("#helpB").addEventListener("click", () => openHelp());
+  $("#menuB").addEventListener("click", () => openPause());
   $("#reqList").addEventListener("click", e => { const li = e.target.closest("li[data-i]"); if (!li) return; const x = SH.list[+li.dataset.i]; if (!x) return; if (x.desk) goNear(SH.deskPos, () => interactWith({ inter: SH.deskInter }), 1.2); else if (x.npc) goNear(x.npc.mesh.position, () => interactWith({ npc: x.npc })); });
   $("#clockOut").addEventListener("click", () => endShift(false));
   $("#rotL").addEventListener("click", () => E.yaw += Math.PI / 6); $("#rotR").addEventListener("click", () => E.yaw -= Math.PI / 6);
@@ -448,7 +449,7 @@ function resolveTask(x, ok) {
   }
 }
 function tick(dt) {
-  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt);
+  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt); tutTick(dt);
   if (E.F && LOC === "floor") lifeTick(dt);
   E.lightT = (E.lightT || 0) + dt; if (E.lightT > 1) { E.lightT = 0; if (LOC !== "title") setLighting(hourNow(), S.weather); if (CUR_JOB && THEMES[CUR_JOB] && THEMES[CUR_JOB].dim) E.hemi.intensity = .55; hudTick(); if (Music.out && Music.cur && musicFor() !== Music.want) Music.play(musicFor()); }
   const c = !E.uiOpen && LOC !== "title" ? candidates() : null; const pr = $("#prompt");
@@ -733,6 +734,7 @@ function openTraining() {
 
 /* ---------- phone / home computer ---------- */
 function openPhone(tab = "shop", jobId) {
+  S.tutPhone = true;
   const tabs = [["shop", "Shop"], ["skills", "Skills"], ["ach", "Trophies"], ["career", "Career"], ["tracks", "Goals"], ["story", "Story"], ["report", "Report"], ["journal", "Journal"], ["words", "Glossary"], ["budget", "Budget"], ["biz", "Business"], ["stickers", "Stickers"], ["friends", "Leaderboard"]];
   const ov = overlay(`<div class="panel modal wide phone"><div class="bar">Brightline Phone<span class="dots"><i></i><i></i><i></i></span></div><div class="tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" role="tab" data-t="${k}" aria-selected="${k === tab}">${n}</button>`).join("")}</div><div class="m-body" id="pb"></div></div>`);
   const draw = t => { tab = t; $$(".tabs button", ov).forEach(b => b.setAttribute("aria-selected", String(b.dataset.t === t))); $("#pb", ov).innerHTML = PHONE[t](jobId); PHONE_WIRE[t] && PHONE_WIRE[t](ov, () => draw(t)); };
@@ -800,7 +802,7 @@ function openCreator(isNew) {
   $("#hire", ov).addEventListener("click", () => {
     const raw = $("#pname", ov).value.trim(); if (!raw) { $("#cerr", ov).textContent = "Type your name so HR can print your badge."; $("#pname", ov).focus(); return; }
     const n = cleanName(raw); if (!n) { $("#cerr", ov).textContent = "Pick a different name: letters and numbers only, nothing rude. Tip: use a nickname, not your full real name."; $("#pname", ov).focus(); return; }
-    if (isNew) { const keep = { muted: S.muted, music: S.music, musicVol: S.musicVol, voice: S.voice, voiceVol: S.voiceVol, voicePick: S.voicePick, gfx: S.gfx }; S = Object.assign(fresh(), keep); S.player = { name: n, look: a }; } else S.player.look = a;
+    if (isNew) { const keep = { muted: S.muted, music: S.music, musicVol: S.musicVol, voice: S.voice, voiceVol: S.voiceVol, voicePick: S.voicePick, gfx: S.gfx }; S = Object.assign(fresh(), keep); S.player = { name: n, look: a }; tutStart(); } else S.player.look = a;
     save(); ov.close(); E.orbit = false; Sfx.ok();
     if (isNew) goLocation("home", { text: "Day 1", after: () => setTimeout(openHelp, 500) }); else { spawnPlayer(Player.mesh.position.x, Player.mesh.position.z, Player.mesh.rotation.y); hud(); }
   });
@@ -820,10 +822,12 @@ const Game = { tick, interact, interactWith, speedMul: () => (1 + CARS[S.car].sp
 function boot() {
   setupHud();
   if (!initEngine()) { $("#ui").innerHTML = `<div class="overlay"><div class="panel modal"><div class="bar">3D isn't available</div><div class="m-body"><p>Your browser couldn't start 3D graphics (WebGL). Try a recent version of Chrome, Edge, Firefox or Safari, or turn on hardware acceleration in your browser settings.</p></div></div></div>`; return; }
-  const lov = overlay(`<div class="loadbox"><div>Loading coworkers...</div><div class="meter"><i id="ldBar" style="width:0%"></i></div></div>`, { sticky: true });
-  const go = () => { lov.close(); showTitle(); };
-  let extra = 0; const bar = p => { const b = $("#ldBar"); if (b) b.style.width = Math.round(p * 100) + "%"; };
-  loadModels(p => bar(p * .8)).then(() => loadExtraModels(() => { extra++; bar(.8 + extra * .1); })).then(go, go);
+  const lov = overlay(`<div class="loadbox"><div class="ld-title">New Hire <sup>3D</sup></div><div id="ldTxt">Loading the office…</div><div class="meter"><i id="ldBar" style="width:0%"></i></div><div class="small" id="ldTip"></div></div>`, { sticky: true });
+  let shown = false; const go = () => { if (shown) return; shown = true; clearInterval(tipT); lov.close(); showTitle(); };
+  let cp = 0, ex = 0; const bar = () => { const b = $("#ldBar"); if (b) b.style.width = Math.round((cp * .6 + ex * .2) * 100) + "%"; const t = $("#ldTxt"); if (t) t.textContent = cp < 1 ? "Loading coworkers…" : ex < 2 ? "Loading furniture and people…" : "Almost ready…"; };
+  const tip = () => { const el = $("#ldTip"); if (el) el.textContent = pick(LOAD_TIPS); }; tip(); const tipT = setInterval(tip, 3500);
+  Promise.all([loadModels(p => { cp = p; bar(); }), loadExtraModels(() => { ex++; bar(); })]).then(go, go);
+  setTimeout(go, 45000);
   initOnline();
 }
 window.__nh = { JOBS, plain, genderFor, get models() { return modelsReady; }, Music, Voice, get S() { return S; }, get SH() { return SH; }, E, Player, goLocation, startShift, jobById, interactWith, openShiftTask, endShift, nextDay, openPhone, openTraining, openDaily, openAskMentor: (...a) => openAskMentor(...a), validateSave: o => validateSave(o), openElevator, get LOC() { return LOC; }, openMenuNow: () => openMenu(todaysMenu()), openRaise: j => openRaise(j), afterShift: (...a) => afterShift(...a), jobState, openWfh: () => openWfh(), adoptPet: id => adoptPet(PETS.find(p => p.id === id)), rideTalk: f => rideTalk(f), openInterview: (j, f) => openInterview(j, f), startEvent: ev => startEvent(ev), openHustles: () => openHustles(), storyCheck: () => storyCheck(), bizDay: () => bizDay(), openEndless: () => openEndless(), offerParty: h => offerParty(h), openWardrobe: () => openWardrobe(), updateNPC: (n, dt) => updateNPC(n, dt), tick: dt => tick(dt), get POST() { return POST; }, debugGfx: (g, lines) => { if (lines !== undefined) QUALITY[g].lines = lines; S.gfx = g; applyQuality(); } };

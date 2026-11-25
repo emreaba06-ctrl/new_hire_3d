@@ -50,6 +50,7 @@ js = "\n".join([
     (here / "decor.js").read_text(encoding="utf-8"),
     (here / "living.js").read_text(encoding="utf-8"),
     (here / "street.js").read_text(encoding="utf-8"),
+    (here / "ui.js").read_text(encoding="utf-8"),
     (here / "online.js").read_text(encoding="utf-8"),
     "boot();\n",
     "})();",
