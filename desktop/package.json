@@ -1,0 +1,32 @@
+{
+  "name": "new-hire-3d",
+  "productName": "New Hire 3D",
+  "version": "1.0.0",
+  "description": "First-person job simulator: learn real skills across 16 departments.",
+  "main": "main.js",
+  "author": "New Hire 3D",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "assemble": "python ../tools/assemble.py",
+    "start": "electron .",
+    "dist": "electron-builder --win --x64 --publish never",
+    "release": "electron-builder --win --x64 --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.newhire3d.game",
+    "productName": "New Hire 3D",
+    "files": ["main.js", "icon.png", "game/**/*", "package.json"],
+    "directories": { "output": "release" },
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "icon.png" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "artifactName": "New-Hire-3D-Setup-${version}.${ext}" },
+    "publish": [{ "provider": "github", "owner": "emreaba06-ctrl", "repo": "new_hire_3d", "releaseType": "release" }]
+  }
+}

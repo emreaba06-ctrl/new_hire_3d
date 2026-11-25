@@ -1,0 +1,1306 @@
+<title>New Hire Simulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
+<style>
+/* Layout: 2010 glossy desktop sim. Title → lobby (building directory) → shift (inbox + task window + mentor) → review. Single light look by choice. */
+:root {
+  color-scheme: light;
+  --sky-top: #bfe3ff; --sky-bot: #5ea9ea;
+  --ink: #1d3550; --ink-soft: #4d6681;
+  --panel: #ffffff; --panel-2: #eef6fd; --edge: #9cc4e8;
+  --blue: #2a7fd4; --blue-dark: #1b5ea6;
+  --go: #5fb320; --go-dark: #3d7d0f;
+  --warn: #f08a12; --bad: #d6342c; --ok: #2f9e2f; --gold: #f5b800;
+  --head: "Ubuntu", "Trebuchet MS", "Lucida Grande", sans-serif;
+  --body: Verdana, Tahoma, "DejaVu Sans", Geneva, sans-serif;
+  --mono: Consolas, "Lucida Console", "Courier New", monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { margin: 0; color: var(--ink); font: 13px/1.55 var(--body);
+  background: radial-gradient(ellipse at 50% -10%, rgba(255,255,255,.85), rgba(255,255,255,0) 55%), linear-gradient(var(--sky-top), var(--sky-bot)) fixed; background-color: var(--sky-bot); }
+button { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.wrap { padding-block: 18px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1180px; margin: 0 auto; }
+h1, h2, h3, h4 { font-family: var(--head); margin: 0; }
+
+/* glossy kit */
+.btn { --c: var(--blue); --cd: var(--blue-dark); font: 700 14px var(--head); color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,.35); cursor: pointer;
+  border: 1px solid var(--cd); border-radius: 999px; padding: 8px 20px;
+  background: linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.15) 49%, rgba(255,255,255,0) 50%), var(--c);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 2px 4px rgba(0,30,70,.3); transition: transform .08s, filter .15s; }
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(1px); }
+.btn.go { --c: var(--go); --cd: var(--go-dark); }
+.btn.orange { --c: var(--warn); --cd: #b05f00; }
+.btn.grey { --c: #8a9bb0; --cd: #63748a; }
+.btn.big { font-size: 19px; padding: 12px 34px; }
+.btn.sm { font-size: 12px; padding: 5px 13px; }
+.btn:disabled { filter: grayscale(.8) opacity(.6); cursor: default; }
+.panel { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,40,90,.25); overflow: hidden; }
+.bar { font: 700 14px var(--head); color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,.35); padding: 7px 12px; display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(rgba(255,255,255,.45), rgba(255,255,255,.1) 50%, rgba(0,0,0,0) 51%), var(--blue); border-bottom: 1px solid var(--blue-dark); }
+.bar .dots { margin-left: auto; display: flex; gap: 5px; }
+.bar .dots i { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(#fff9, #fff3); border: 1px solid rgba(0,0,0,.25); }
+.meter { height: 14px; border-radius: 7px; background: linear-gradient(#cfd9e4, #e8eef4); border: 1px solid #93a8bd; overflow: hidden; }
+.meter i { display: block; height: 100%; transition: width .5s;
+  background: linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.1) 50%, rgba(0,0,0,0) 51%), repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 6px, transparent 6px 12px), var(--c, var(--go)); }
+.chip { display: inline-block; font: 700 11px var(--head); padding: 2px 9px; border-radius: 999px; color: #fff; background: var(--c, var(--blue)); text-shadow: 0 -1px 0 rgba(0,0,0,.25); vertical-align: middle; }
+.small { font-size: 11px; color: var(--ink-soft); }
+
+/* title */
+.title-screen { min-height: 100vh; display: grid; place-items: center; position: relative; overflow: hidden; padding: 30px 16px; }
+.rays { position: absolute; inset: -50%; background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.22) 0 9deg, rgba(255,255,255,0) 9deg 18deg); animation: spin 90s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.title-card { position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; max-width: 640px; }
+.logo { font: 700 clamp(48px, 11vw, 96px)/.9 var(--head); color: #fff; letter-spacing: -.02em;
+  text-shadow: 0 2px 0 #1b5ea6, 0 4px 0 #174f8c, 0 6px 0 #12416f, 0 10px 18px rgba(0,30,70,.45); }
+.logo-sub { font: 700 clamp(16px, 3.4vw, 24px) var(--head); color: #fff; letter-spacing: .3em; background: linear-gradient(rgba(255,255,255,.4), rgba(255,255,255,0) 50%), var(--warn); padding: 6px 18px 6px 24px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,.25); transform: rotate(-2deg); }
+.burst { position: absolute; right: -120px; top: -50px; width: 120px; height: 120px; display: grid; place-items: center; text-align: center; font: 700 15px/1.1 var(--head); color: #6b3a00;
+  background: var(--gold); clip-path: polygon(50% 0, 61% 12%, 77% 6%, 79% 22%, 95% 25%, 88% 40%, 100% 50%, 88% 60%, 95% 75%, 79% 78%, 77% 94%, 61% 88%, 50% 100%, 39% 88%, 23% 94%, 21% 78%, 5% 75%, 12% 60%, 0 50%, 12% 40%, 5% 25%, 21% 22%, 23% 6%, 39% 12%); animation: wob 2.4s ease-in-out infinite; }
+@keyframes wob { 50% { transform: rotate(8deg) scale(1.06); } }
+.title-card p { margin: 0; color: #fff; font-size: 15px; text-shadow: 0 1px 2px rgba(0,40,90,.6); max-width: 52ch; }
+.title-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+/* create */
+.create { max-width: 760px; margin: 30px auto; }
+.create-body { padding: 20px; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 22px; }
+.av-preview { background: linear-gradient(#e7f3ff, #c6e1fb); border: 1px solid var(--edge); border-radius: 12px; display: grid; place-items: center; padding: 14px; align-self: start; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.field label, .lbl { font: 700 12px var(--head); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+input[type=text], textarea, select { font: 14px var(--body); color: var(--ink); background: #fff; border: 1px solid #8fb2d4; border-radius: 6px; padding: 8px 10px; box-shadow: inset 0 2px 3px rgba(0,30,70,.12); width: 100%; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #8fb2d4, 0 2px 3px rgba(0,0,0,.2); cursor: pointer; padding: 0; }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--gold), 0 2px 3px rgba(0,0,0,.2); }
+.seg { display: inline-flex; border: 1px solid var(--blue-dark); border-radius: 999px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: none; font: 700 12px var(--head); padding: 7px 13px; cursor: pointer; color: var(--ink); background: linear-gradient(#fff, #dde9f5); border-right: 1px solid #a9c3dc; }
+.seg button:last-child { border-right: none; }
+.seg button[aria-pressed="true"] { color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,.3); background: linear-gradient(rgba(255,255,255,.4), rgba(255,255,255,.05) 50%, rgba(0,0,0,0) 51%), var(--blue); }
+
+/* lobby */
+.lobby-top { display: flex; align-items: center; gap: 14px; padding: 12px 16px; flex-wrap: wrap; }
+.lobby-top .who { display: flex; align-items: center; gap: 12px; }
+.lobby-top .who b { font: 700 18px var(--head); display: block; }
+.lobby-stats { margin-left: auto; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+.stat-k { font: 700 10px var(--head); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); display: block; }
+.stat-v { font: 700 18px var(--head); font-variant-numeric: tabular-nums; }
+.money { color: var(--ok); }
+.hq { margin: 22px 0 12px; display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.hq h2 { font-size: 28px; color: #fff; text-shadow: 0 2px 0 var(--blue-dark), 0 4px 8px rgba(0,30,70,.4); }
+.hq p { margin: 2px 0 0; color: #fff; text-shadow: 0 1px 2px rgba(0,40,90,.6); }
+.diff-box { background: rgba(255,255,255,.85); border: 1px solid var(--edge); border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; gap: 5px; }
+.depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 14px; }
+.dept { display: flex; flex-direction: column; }
+.dept-head { display: flex; gap: 12px; padding: 12px; align-items: center; border-bottom: 1px solid #dbe8f4; background: linear-gradient(#fff, #f0f7fe); }
+.tile { --c: var(--blue); width: 52px; height: 52px; flex: none; border-radius: 12px; display: grid; place-items: center; border: 1px solid rgba(0,0,0,.25);
+  background: linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.12) 50%, rgba(0,0,0,0) 51%), var(--c); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 2px 4px rgba(0,0,0,.25); }
+.tile svg { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 0 rgba(0,0,0,.3)); }
+.dept-head .floor { font: 700 10px var(--head); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); }
+.dept-head h3 { font-size: 17px; line-height: 1.15; }
+.dept-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.dept-body .role { font-weight: 700; }
+.stars { color: var(--gold); letter-spacing: 2px; font-size: 14px; text-shadow: 0 1px 0 #a87b00; }
+.stars .off { color: #c9d4df; text-shadow: none; }
+.dept-btns { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; flex-wrap: wrap; }
+.dept.soon { border-style: dashed; background: rgba(255,255,255,.55); box-shadow: none; display: grid; place-items: center; text-align: center; padding: 20px; color: var(--ink-soft); min-height: 200px; }
+
+/* shift */
+.hud { display: flex; align-items: center; gap: 16px; padding: 9px 14px; flex-wrap: wrap; }
+.hud .who { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.hud .who b { font: 700 15px var(--head); display: block; }
+.hud .grow { flex: 1 1 160px; min-width: 140px; }
+.clock { font: 700 22px var(--mono); color: #0d3b66; background: linear-gradient(#e9f5d8, #c6e3a2); border: 1px solid #7aa64b; border-radius: 6px; padding: 2px 10px; box-shadow: inset 0 2px 3px rgba(0,0,0,.15); font-variant-numeric: tabular-nums; }
+.shift { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; margin-top: 14px; align-items: start; }
+.inbox ul { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+.inbox li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; padding: 8px; border-radius: 6px; font-size: 12px; border: 1px solid transparent; }
+.inbox li.cur { background: linear-gradient(#fff6d6, #ffe9a3); border-color: #e3c25c; }
+.inbox li .ic { font-weight: 700; text-align: center; }
+.inbox li.ok .ic { color: var(--ok); } .inbox li.fail .ic { color: var(--bad); }
+.inbox li.urgent { border-color: var(--bad); }
+.inbox li b { display: block; font-family: var(--head); font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
+.inbox li.locked { opacity: .5; }
+.win-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.from { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.from b { font-family: var(--head); font-size: 15px; }
+.from .timer { margin-left: auto; font: 700 16px var(--mono); color: var(--bad); }
+.msg-text { font-size: 14px; max-width: 70ch; }
+.msg-text p { margin: 0 0 8px; }
+.doc { border: 1px solid #e3c25c; background: #fffbea; border-radius: 8px; }
+.doc summary { cursor: pointer; padding: 7px 12px; font: 700 13px var(--head); color: #7a5a00; }
+.doc .doc-in { padding: 4px 14px 12px; font-size: 13px; overflow-x: auto; }
+.doc table, .tbl { border-collapse: collapse; font-size: 12.5px; }
+.doc td, .doc th, .tbl td, .tbl th { border: 1px solid #e0d39a; padding: 4px 9px; text-align: left; }
+.doc th { background: #fff2c2; }
+pre.code { font: 12.5px/1.5 var(--mono); background: #1e2b3a; color: #e6f1ff; border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: 0; }
+code { font-family: var(--mono); background: #e8f1fa; padding: 0 4px; border-radius: 3px; font-size: .95em; }
+.ask { font: 700 15px var(--head); color: var(--blue-dark); }
+.foot { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid #dbe8f4; padding: 12px 16px; background: var(--panel-2); }
+.foot .warn { color: var(--bad); font-weight: 700; font-size: 12px; }
+
+/* widgets */
+.opts, .rows { display: flex; flex-direction: column; gap: 7px; }
+.opt { text-align: left; font: 13.5px/1.45 var(--body); color: var(--ink); cursor: pointer; padding: 10px 12px; border-radius: 8px; border: 1px solid #b7cde3; background: linear-gradient(#fff, #edf4fb); display: flex; gap: 10px; align-items: flex-start; }
+.opt:hover:not(:disabled) { border-color: var(--blue); }
+.opt .box { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 2px solid #6d8cab; border-radius: 50%; background: #fff; }
+.opt.multi .box { border-radius: 3px; }
+.opt.sel { border-color: var(--blue); background: linear-gradient(#f2f9ff, #d6eafc); }
+.opt.sel .box { background: var(--blue); border-color: var(--blue-dark); box-shadow: inset 0 0 0 2px #fff; }
+.opt.right { border-color: var(--ok); background: linear-gradient(#f3fff0, #d7f2cc); }
+.opt.wrong { border-color: var(--bad); background: linear-gradient(#fff4f3, #fbd6d3); }
+.opt.missed { border-color: var(--ok); border-style: dashed; }
+.orow { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #b7cde3; border-radius: 8px; background: linear-gradient(#fff, #edf4fb); }
+.orow .n { font: 700 13px var(--head); width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; flex: none; }
+.orow .t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.orow .mv { display: flex; gap: 4px; }
+.orow .mv button { width: 30px; height: 28px; border-radius: 6px; border: 1px solid #8fb2d4; background: linear-gradient(#fff, #dde9f5); cursor: pointer; font-size: 11px; color: var(--ink); }
+.orow.right { border-color: var(--ok); } .orow.wrong { border-color: var(--bad); }
+.srow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #b7cde3; border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.srow .t { flex: 1 1 220px; min-width: 0; }
+.srow.right { border-color: var(--ok); background: #f3fff0; } .srow.wrong { border-color: var(--bad); background: #fff4f3; }
+.mrow { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr); gap: 10px; align-items: center; padding: 6px 8px; border: 1px solid #b7cde3; border-radius: 8px; background: #fff; }
+.mrow b { font-family: var(--head); }
+.mrow.right { border-color: var(--ok); } .mrow.wrong { border-color: var(--bad); }
+.ifields { display: flex; flex-wrap: wrap; gap: 12px; }
+.ifield { flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px; }
+.ifield .in { display: flex; align-items: center; gap: 6px; }
+.ifield.right input { border-color: var(--ok); } .ifield.wrong input { border-color: var(--bad); }
+.term { background: #0c0c0c; color: #d7d7d7; border-radius: 6px; border: 2px solid #5a6b7d; font: 13px/1.45 var(--mono); height: 300px; display: flex; flex-direction: column; cursor: text; }
+.tout { flex: 1; overflow: auto; padding: 10px 12px 4px; white-space: pre-wrap; word-break: break-word; }
+.tline { display: flex; gap: 6px; padding: 2px 12px 10px; }
+.tline input { flex: 1; min-width: 0; background: none; border: none; color: #fff; font: 13px var(--mono); outline: none; padding: 0; }
+.tp { color: #9fe870; white-space: nowrap; }
+.t-err { color: #ff8a80; } .t-ok { color: #9fe870; } .t-dim { color: #8a8a8a; }
+.editor { font: 13px/1.55 var(--mono); min-height: 220px; white-space: pre; tab-size: 2; resize: vertical; background: #1e2b3a; color: #e6f1ff; border-color: #0e1a26; }
+.tests { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; font: 12px var(--mono); }
+.tests li { padding: 5px 9px; border-radius: 5px; background: #f1f5f9; overflow-wrap: anywhere; }
+.tests li.p { color: var(--ok); } .tests li.f { color: var(--bad); }
+
+/* result */
+.result { border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; animation: pop .35s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes pop { from { transform: scale(.92); opacity: 0; } }
+.result.good { background: linear-gradient(#f0ffe8, #d2f2c2); border: 2px solid var(--ok); }
+.result.bad { background: linear-gradient(#fff2f0, #fcd5d0); border: 2px solid var(--bad); }
+.result h3 { font-size: 20px; }
+.result.good h3 { color: var(--ok); } .result.bad h3 { color: var(--bad); }
+.lesson { background: #fff; border: 1px solid #e3c25c; border-left: 5px solid var(--gold); border-radius: 6px; padding: 8px 12px; }
+.lesson b { font-family: var(--head); color: #7a5a00; }
+
+/* mentor */
+.mentor { display: flex; gap: 12px; align-items: flex-end; margin-top: 14px; }
+.bubble { position: relative; background: #fff; border: 2px solid var(--edge); border-radius: 14px; padding: 10px 14px; font-size: 13.5px; box-shadow: 0 3px 8px rgba(0,40,90,.2); flex: 1; min-width: 0; }
+.bubble::before { content: ""; position: absolute; left: -11px; bottom: 14px; border: 10px solid transparent; border-right-color: var(--edge); border-left: 0; }
+.bubble b.name { font-family: var(--head); color: var(--blue-dark); }
+.av { flex: none; border-radius: 50%; display: block; }
+
+/* overlays */
+.overlay { position: fixed; inset: 0; z-index: 30; background: rgba(10, 40, 80, .55); display: grid; place-items: center; padding: 16px; }
+.modal { max-width: 560px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; }
+.modal .m-body { padding: 18px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.notif { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 25; width: min(330px, calc(100% - 32px)); transform: translateY(160%); transition: transform .4s cubic-bezier(.2, 1.4, .4, 1); }
+.notif.show { transform: none; }
+.notif .bar { background: linear-gradient(rgba(255,255,255,.45), rgba(255,255,255,.1) 50%, rgba(0,0,0,0) 51%), var(--bad); border-color: #8f1d17; }
+.notif .n-body { padding: 10px 12px; font-size: 13px; }
+.floaty { position: fixed; z-index: 40; font: 700 18px var(--head); pointer-events: none; animation: floatUp 1.2s ease-out forwards; text-shadow: 0 1px 0 #fff, 0 0 6px #fff; }
+@keyframes floatUp { to { transform: translateY(-50px); opacity: 0; } }
+.review { max-width: 620px; margin: 24px auto; }
+.stamp { font: 700 clamp(26px, 6vw, 40px) var(--head); color: var(--ok); border: 4px solid currentColor; border-radius: 10px; padding: 4px 16px; display: inline-block; transform: rotate(-3deg); animation: stampIn .45s cubic-bezier(.2, 1.6, .4, 1); }
+.stamp.badday { color: var(--bad); }
+@keyframes stampIn { from { transform: rotate(-3deg) scale(2.2); opacity: 0; } }
+.rv-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
+.rv-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rv-table td { padding: 7px 10px; border-bottom: 1px solid #dbe8f4; text-align: left; }
+.rv-table td:last-child { text-align: right; font: 700 15px var(--head); font-variant-numeric: tabular-nums; }
+.promo { background: linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,0) 50%), var(--gold); color: #5a3a00; font: 700 18px var(--head); padding: 10px 18px; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+.lessons { text-align: left; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.taskbar { position: sticky; bottom: 0; margin-top: 18px; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 10px; color: #fff; font: 700 12px var(--head);
+  background: linear-gradient(rgba(255,255,255,.3), rgba(255,255,255,.05) 50%, rgba(0,0,0,.05) 51%), #1f3b5c; border: 1px solid #0f2238; box-shadow: 0 -2px 10px rgba(0,0,0,.2); }
+.orb { width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 50% 30%, #bff27a, #4f9a14 60%, #2c5e06); border: 1px solid #1c3d02; box-shadow: inset 0 1px 0 rgba(255,255,255,.6); }
+.taskbar .tclock { margin-left: auto; font-family: var(--mono); }
+.shake { animation: shake .35s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+
+@media (max-width: 820px) {
+  .shift { grid-template-columns: minmax(0, 1fr); }
+  .inbox ul { flex-direction: row; overflow-x: auto; }
+  .inbox li { flex: 0 0 170px; }
+  .create-body { grid-template-columns: minmax(0, 1fr); }
+  .av-preview { justify-self: center; }
+  .burst { right: -6px; top: -60px; width: 96px; height: 96px; font-size: 12px; }
+  .mrow { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+
+<div id="app"></div>
+<div class="notif" id="notif" role="status" aria-live="assertive"><div class="panel"><div class="bar">Urgent task incoming</div><div class="n-body" id="notifBody"></div></div></div>
+
+<script>
+(() => {
+"use strict";
+/* =====================================================================
+   NEW HIRE SIMULATOR
+   Engine first, job content after. To add a job, add one object to the
+   JOBS array (see the template comment above JOBS). Task types available:
+     choice  - pick one option            multi - select all that apply
+     order   - put steps in order         input - type number/text answers
+     match   - match pairs                sort  - put items into buckets
+     code    - write a JS function        terminal - fake command line
+   ===================================================================== */
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const money = n => "$" + Math.round(n).toLocaleString();
+
+/* ---------- save ---------- */
+const KEY = "new-hire-sim.v1";
+let S = { player: null, jobs: {}, money: 0, muted: false, diff: "normal" };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const jobState = id => (S.jobs[id] = S.jobs[id] || { xp: 0, days: 0, done: {}, lessons: {}, best: 0 });
+
+/* ---------- rules ---------- */
+const LEVELS = [
+  { xp: 0, name: "Trainee", pay: 90 }, { xp: 60, name: "Junior", pay: 120 }, { xp: 150, name: "Associate", pay: 160 },
+  { xp: 280, name: "Senior", pay: 210 }, { xp: 450, name: "Lead", pay: 280 }
+];
+const lvl = xp => LEVELS.filter(l => xp >= l.xp).length - 1;
+const DIFF = {
+  easy:   { name: "Intern",   tag: "Easy",   right: 8, wrong: -8,  hint: 0,  timer: 0,   urgent: 0,   curve: .25, pay: .8,  xp: .75, desc: "No timers, free mentor help, mistakes hurt less." },
+  normal: { name: "Employee", tag: "Normal", right: 8, wrong: -15, hint: -4, timer: 0,   urgent: 120, curve: .5,  pay: 1,   xp: 1,   desc: "Urgent tasks have a 2-minute timer. Mentor help costs a little." },
+  hard:   { name: "Overtime", tag: "Hard",   right: 7, wrong: -22, hint: -8, timer: 150, urgent: 75,  curve: .8,  pay: 1.4, xp: 1.5, desc: "Every task is timed, harder tasks show up sooner, mistakes hurt." }
+};
+const SHIFT_TASKS = 4;
+
+/* ---------- sound ---------- */
+const Sfx = {
+  ctx: null,
+  init() { try { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); if (this.ctx.state === "suspended") this.ctx.resume(); } catch (e) {} },
+  tone(f, d, type = "square", v = .04, t0 = 0, f2) {
+    if (S.muted || !this.ctx) return;
+    try { const c = this.ctx, t = c.currentTime + t0, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(c.destination); o.start(t); o.stop(t + d + .03); } catch (e) {}
+  },
+  click() { this.tone(1200, .03, "sine", .03); },
+  key() { this.tone(600 + Math.random() * 400, .02, "square", .012); },
+  ok() { [660, 880, 1320].forEach((f, i) => this.tone(f, .14, "triangle", .06, i * .07)); },
+  bad() { this.tone(300, .12, "square", .05); this.tone(200, .25, "square", .05, .12); },
+  alarm() { for (let i = 0; i < 3; i++) { this.tone(880, .12, "square", .04, i * .25); this.tone(660, .12, "square", .04, i * .25 + .12); } },
+  cash() { [1046, 1318, 1568, 2093].forEach((f, i) => this.tone(f, .12, "sine", .05, i * .06)); this.tone(2637, .4, "sine", .04, .26); },
+  promo() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => this.tone(f, .18, "triangle", .07, i * .12)); },
+  tick() { this.tone(1800, .03, "sine", .025); }
+};
+document.addEventListener("pointerdown", () => Sfx.init());
+document.addEventListener("keydown", e => { Sfx.init(); if (e.target.matches && e.target.matches(".tline input") && e.key.length === 1) Sfx.key(); });
+
+/* ---------- avatars & icons ---------- */
+const SKINS = ["#f6d7bd", "#e8b48f", "#c98e62", "#9a6440", "#6b4128"];
+const HAIRS = ["#2b1d14", "#6b3e1f", "#c98b3c", "#e7d08a", "#8c8c8c", "#b4322a"];
+const SHIRTS = ["#2a7fd4", "#5fb320", "#f08a12", "#d14f8a", "#6a3fc1", "#3d4b5c"];
+function avatar(a, size = 48) {
+  const skin = SKINS[a.skin] || SKINS[0], hair = HAIRS[a.hair] || HAIRS[0], shirt = SHIRTS[a.shirt] || SHIRTS[0];
+  const styles = [
+    `<path d="M19 28c-1-12 7-17 13-17s14 5 13 17c-2-6-6-9-13-9s-11 3-13 9z" fill="${hair}"/>`,
+    `<path d="M18 40c-3-16 3-29 14-29s17 13 14 29l-4-1c1-8 0-15-10-17-10 2-11 9-10 17z" fill="${hair}"/>`,
+    `<circle cx="24" cy="18" r="6" fill="${hair}"/><circle cx="32" cy="14" r="7" fill="${hair}"/><circle cx="40" cy="18" r="6" fill="${hair}"/><path d="M19 27c0-6 5-10 13-10s13 4 13 10c-3-4-7-5-13-5s-10 1-13 5z" fill="${hair}"/>`,
+    `<path d="M20 24c2-8 8-11 12-11s10 3 12 11c-4-3-8-4-12-4s-8 1-12 4z" fill="${hair}"/>`
+  ];
+  return `<svg class="av" viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#d4ebff"/><ellipse cx="32" cy="18" rx="22" ry="10" fill="#fff" opacity=".35"/>
+    <path d="M9 64c0-14 10-21 23-21s23 7 23 21z" fill="${shirt}"/><path d="M26 43l6 7 6-7z" fill="#fff"/><rect x="28" y="36" width="8" height="8" fill="${skin}"/>
+    <circle cx="32" cy="28" r="13" fill="${skin}"/>${styles[a.style || 0] || styles[0]}
+    <circle cx="27" cy="29" r="1.6" fill="#2a2a2a"/><circle cx="37" cy="29" r="1.6" fill="#2a2a2a"/><path d="M27 34q5 4 10 0" stroke="#7a3b2a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
+}
+const hashAv = name => { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return { skin: h % 5, hair: (h >> 3) % 6, shirt: (h >> 6) % 6, style: (h >> 9) % 4 }; };
+const ICONS = {
+  monitor: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+  truck: '<rect x="2" y="7" width="12" height="9"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  boxes: '<rect x="3" y="12" width="8" height="8"/><rect x="13" y="12" width="8" height="8"/><rect x="8" y="4" width="8" height="8"/>',
+  chart: '<path d="M3 20h18M5 16l5-5 4 3 6-7"/><path d="M15 7h5v5"/>',
+  calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="4"/><path d="M8.5 14h.01M12 14h.01M15.5 14h.01M8.5 17.5h.01M12 17.5h.01M15.5 17.5h.01"/>',
+  people: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 3-6 6-6s6 2 6 6M15 14c3 0 6 2 6 5"/>',
+  case: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 13h18"/>',
+  headset: '<path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="4" height="6" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/><path d="M19 20c0 1-2 2-5 2"/>'
+};
+const icon = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k] || ICONS.case}</svg>`;
+
+/* ---------- run player code ---------- */
+function compile(code, names) {
+  const ret = "\n;return {" + names.map(n => `${n}: (typeof ${n} !== "undefined" ? ${n} : undefined)`).join(",") + "};";
+  try { return new Function(code + ret)(); }
+  catch (e) {
+    if (!(e instanceof EvalError) && !/unsafe-eval|Content Security|Refused/i.test(e.message)) throw e;
+    window.__nhOut = undefined; window.__nhErr = undefined; let caught;
+    const onErr = ev => { caught = ev.error || new Error(ev.message); ev.preventDefault(); };
+    window.addEventListener("error", onErr);
+    const s = document.createElement("script");
+    s.textContent = `try{window.__nhOut=(function(){${code + ret}\n})();}catch(e){window.__nhErr=e;}`;
+    document.head.appendChild(s); s.remove(); window.removeEventListener("error", onErr);
+    if (caught) throw caught; if (window.__nhErr) throw window.__nhErr;
+    if (!window.__nhOut) throw new Error("Your code could not run. Check for typos.");
+    return window.__nhOut;
+  }
+}
+
+/* =====================================================================
+   WIDGETS: each returns { submit() -> {ok, msg} | {incomplete: "..."} }
+   or { noSubmit: true } and calls ctx.finish(ok, msg) itself.
+   ===================================================================== */
+const W = {};
+W.choice = (el, t) => {
+  const opts = shuffle(t.options); let sel = -1;
+  el.innerHTML = `<div class="opts">${opts.map((o, k) => `<button class="opt" type="button" data-k="${k}"><span class="box"></span><span>${o.t}</span></button>`).join("")}</div>`;
+  $$(".opt", el).forEach(b => b.addEventListener("click", () => { sel = +b.dataset.k; $$(".opt", el).forEach(x => x.classList.toggle("sel", x === b)); Sfx.click(); }));
+  return { submit() {
+    if (sel < 0) return { incomplete: "Pick an answer first." };
+    $$(".opt", el).forEach((b, k) => { b.disabled = true; if (opts[k].ok) b.classList.add("right"); else if (k === sel) b.classList.add("wrong"); });
+    return { ok: !!opts[sel].ok, msg: opts[sel].fb || "" };
+  } };
+};
+W.multi = (el, t) => {
+  const items = shuffle(t.items); const sel = new Set();
+  el.innerHTML = `<div class="opts">${items.map((o, k) => `<button class="opt multi" type="button" data-k="${k}"><span class="box"></span><span>${o.t}</span></button>`).join("")}</div><div class="small">Select all that apply.</div>`;
+  $$(".opt", el).forEach(b => b.addEventListener("click", () => { const k = +b.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); b.classList.toggle("sel"); Sfx.click(); }));
+  return { submit() {
+    if (!sel.size) return { incomplete: "Select at least one." };
+    let missed = 0, extra = 0;
+    $$(".opt", el).forEach((b, k) => { b.disabled = true; const o = items[k];
+      if (o.ok && sel.has(k)) b.classList.add("right"); else if (o.ok) { b.classList.add("missed"); missed++; } else if (sel.has(k)) { b.classList.add("wrong"); extra++; } });
+    const ok = !missed && !extra;
+    return { ok, msg: ok ? "You caught every one." : `${missed ? `You missed ${missed} (dashed green). ` : ""}${extra ? `${extra} of your picks were wrong (red).` : ""}` };
+  } };
+};
+W.order = (el, t) => {
+  let cur = shuffle(t.items.map((_, i) => i));
+  if (cur.every((v, i) => v === i)) cur.reverse();
+  let locked = false;
+  const draw = () => {
+    el.innerHTML = `<div class="rows">${cur.map((idx, pos) => `<div class="orow" data-p="${pos}"><span class="n">${pos + 1}</span><span class="t">${t.items[idx]}</span>
+      ${locked ? "" : `<span class="mv"><button type="button" data-d="-1" aria-label="Move up" ${pos === 0 ? "disabled" : ""}>▲</button><button type="button" data-d="1" aria-label="Move down" ${pos === cur.length - 1 ? "disabled" : ""}>▼</button></span>`}</div>`).join("")}</div>${locked ? "" : `<div class="small">Use the arrows to put the steps in order, first step at the top.</div>`}`;
+    $$(".mv button", el).forEach(b => b.addEventListener("click", () => {
+      const p = +b.closest(".orow").dataset.p, d = +b.dataset.d; [cur[p], cur[p + d]] = [cur[p + d], cur[p]]; Sfx.click(); draw();
+      const btn = $(`.orow[data-p="${p + d}"] button[data-d="${d}"]`, el) || $(`.orow[data-p="${p + d}"] button`, el); if (btn) btn.focus();
+    }));
+  };
+  draw();
+  return { submit() {
+    locked = true; const ok = cur.every((v, i) => v === i); draw();
+    $$(".orow", el).forEach((r, i) => r.classList.add(cur[i] === i ? "right" : "wrong"));
+    return { ok, msg: ok ? "Perfect order." : "The correct order is: " + t.items.map((s, i) => `<br>${i + 1}. ${s}`).join("") };
+  } };
+};
+W.input = (el, t) => {
+  el.innerHTML = `<div class="ifields">${t.fields.map((f, i) => `<div class="ifield"><label class="lbl" for="if${i}">${f.label}</label><div class="in">${f.prefix || ""}<input type="text" id="if${i}" autocomplete="off" inputmode="${typeof f.answer === "number" ? "decimal" : "text"}">${f.suffix || ""}</div></div>`).join("")}</div>`;
+  const norm = s => String(s).toLowerCase().replace(/\s+/g, "").replace(/(am|pm)$/, "");
+  return { submit() {
+    const vals = t.fields.map((_, i) => $(`#if${i}`, el).value.trim());
+    if (vals.some(v => !v)) return { incomplete: "Fill in every box first." };
+    let ok = true;
+    t.fields.forEach((f, i) => {
+      let good;
+      if (typeof f.answer === "number") { const v = parseFloat(vals[i].replace(/[^0-9.\-]/g, "")); good = !isNaN(v) && Math.abs(v - f.answer) <= (f.tol ?? .01); }
+      else good = [].concat(f.answer).some(a => norm(a) === norm(vals[i]));
+      $(`#if${i}`, el).disabled = true; $(`#if${i}`, el).closest(".ifield").classList.add(good ? "right" : "wrong"); ok = ok && good;
+    });
+    return { ok, msg: ok ? "Numbers check out." : "Correct answer" + (t.fields.length > 1 ? "s" : "") + ": " + t.fields.map(f => `${f.label}: <b>${f.prefix || ""}${typeof f.answer === "number" ? f.answer.toLocaleString() : [].concat(f.answer)[0]}${f.suffix || ""}</b>`).join(" · ") };
+  } };
+};
+W.match = (el, t) => {
+  const rights = shuffle(t.pairs.map(p => p[1]));
+  el.innerHTML = `<div class="rows">${t.pairs.map((p, i) => `<div class="mrow"><b>${p[0]}</b><select id="mt${i}" aria-label="Match for ${esc(p[0])}"><option value="">Choose…</option>${rights.map(r => `<option>${esc(r)}</option>`).join("")}</select></div>`).join("")}</div>`;
+  return { submit() {
+    const vals = t.pairs.map((_, i) => $(`#mt${i}`, el).value);
+    if (vals.some(v => !v)) return { incomplete: "Match every row first." };
+    let ok = true;
+    t.pairs.forEach((p, i) => { const g = vals[i] === p[1]; ok = ok && g; const s = $(`#mt${i}`, el); s.disabled = true; s.closest(".mrow").classList.add(g ? "right" : "wrong"); });
+    return { ok, msg: ok ? "All matched." : "Correct matches: " + t.pairs.map(p => `<br><b>${p[0]}</b> → ${p[1]}`).join("") };
+  } };
+};
+W.sort = (el, t) => {
+  const items = shuffle(t.items); const pickd = items.map(() => -1);
+  el.innerHTML = `<div class="rows">${items.map((it, i) => `<div class="srow" data-i="${i}"><span class="t">${it.t}</span><span class="seg" role="group">${t.buckets.map((b, j) => `<button type="button" data-j="${j}" aria-pressed="false">${b}</button>`).join("")}</span></div>`).join("")}</div>`;
+  $$(".srow", el).forEach(r => $$("button", r).forEach(b => b.addEventListener("click", () => {
+    pickd[+r.dataset.i] = +b.dataset.j; $$("button", r).forEach(x => x.setAttribute("aria-pressed", String(x === b))); Sfx.click();
+  })));
+  return { submit() {
+    if (pickd.some(v => v < 0)) return { incomplete: "Sort every item first." };
+    let wrong = [];
+    $$(".srow", el).forEach((r, i) => { const g = pickd[i] === items[i].b; r.classList.add(g ? "right" : "wrong"); $$("button", r).forEach(x => x.disabled = true); if (!g) wrong.push(`<br>${items[i].t} → <b>${t.buckets[items[i].b]}</b>`); });
+    return { ok: !wrong.length, msg: wrong.length ? `${wrong.length} misplaced:${wrong.join("")}` : "Everything is in the right place." };
+  } };
+};
+W.code = (el, t) => {
+  el.innerHTML = `<textarea class="editor" id="ed" spellcheck="false" autocapitalize="off" aria-label="Code editor">${esc(t.starter)}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm" type="button" id="runT">Run tests</button><span class="small">Test as much as you like. Submitting with failing tests ships a bug.</span></div><ul class="tests" id="tl"></ul>`;
+  const ta = $("#ed", el);
+  ta.addEventListener("keydown", e => { if (e.key === "Tab") { e.preventDefault(); ta.setRangeText("  ", ta.selectionStart, ta.selectionEnd, "end"); } });
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const run = () => {
+    const tl = $("#tl", el); let fn;
+    try { fn = compile(ta.value, [t.fn])[t.fn]; } catch (err) { tl.innerHTML = `<li class="f">✘ ${esc(err.name)}: ${esc(err.message)}</li>`; return 0; }
+    if (typeof fn !== "function") { tl.innerHTML = `<li class="f">✘ Couldn't find a function named ${t.fn}.</li>`; return 0; }
+    let pass = 0;
+    tl.innerHTML = t.tests.map(ts => { let got, ok; try { got = fn(...JSON.parse(JSON.stringify(ts.args))); ok = same(got, ts.want); } catch (err) { got = err.message; ok = false; }
+      if (ok) pass++; return `<li class="${ok ? "p" : "f"}">${ok ? "✔" : "✘"} ${t.fn}(${ts.args.map(a => esc(JSON.stringify(a))).join(", ")}) ${ok ? "" : `→ expected ${esc(JSON.stringify(ts.want))}, got ${esc(JSON.stringify(got))}`}</li>`; }).join("");
+    Sfx.click(); return pass;
+  };
+  $("#runT", el).addEventListener("click", run);
+  return { submit() { const p = run(); ta.readOnly = true; $("#runT", el).disabled = true;
+    return p === t.tests.length ? { ok: true, msg: "All tests pass. Shipped!" } : { ok: false, msg: `Only ${p} of ${t.tests.length} tests passed, so you shipped a bug to production. Users noticed.` }; } };
+};
+W.terminal = (el, t, ctx) => {
+  const st = {}; let done = false;
+  el.innerHTML = `<div class="term"><div class="tout"></div><div class="tline"><span class="tp">${esc(t.prompt)}</span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Command line"></div></div><div class="small">Type <b>help</b> to list commands. Up arrow repeats your last command.</div>`;
+  const out = $(".tout", el), inp = $(".tline input", el); const hist = [];
+  const print = (s, cls = "") => { out.insertAdjacentHTML("beforeend", `<span class="${cls}">${esc(s)}</span>\n`); out.scrollTop = out.scrollHeight; };
+  print(t.intro || "", "t-dim");
+  inp.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp" && hist.length) { e.preventDefault(); inp.value = hist[hist.length - 1]; return; }
+    if (e.key !== "Enter" || done) return;
+    const line = inp.value.trim(); inp.value = ""; if (!line) return; hist.push(line);
+    print(t.prompt + " " + line);
+    if (/^help$/i.test(line)) return print(t.help);
+    if (/^(cls|clear)$/i.test(line)) { out.innerHTML = ""; return; }
+    const c = t.commands.find(c => c.re.test(line));
+    if (!c) return print(`'${line.split(" ")[0]}' is not a recognized command. Type help.`, "t-err");
+    const r = c.run(line.match(c.re), st);
+    if (typeof r === "string") return print(r);
+    if (r.out) print(r.out, r.cls || "");
+    if (r.fail) { done = true; inp.disabled = true; ctx.finish(false, r.fail); }
+    if (r.win) { done = true; inp.disabled = true; print(r.winOut || "✔ Problem solved.", "t-ok"); ctx.finish(true, r.win); }
+  });
+  $(".term", el).addEventListener("click", () => inp.focus());
+  return { noSubmit: true };
+};
+
+/* =====================================================================
+   JOBS. Template for a new job:
+   {
+     id: "unique-id", dept: "Department name", floor: 12, icon: "case", color: "#hex",
+     role: "Job Title", blurb: "One line about the job",
+     mentor: { name: "Full Name", title: "Their title", hello: "First-day greeting" },
+     tasks: [ { id, tier: 1-3, type, from: ["Name", "Team"], subject, msg, doc?: {title, html},
+                ask, hint, lesson, curveball?: true, ...fields for the type } ]
+   }
+   ===================================================================== */
+const JOBS = [];
+
+/* ---------- IT ---------- */
+JOBS.push({
+  id: "it", dept: "IT Help Desk", floor: 3, icon: "monitor", color: "#2a7fd4", role: "IT Support Technician",
+  blurb: "Fix computers, networks and printers for 400 coworkers.",
+  mentor: { name: "Dana Okafor", title: "IT Lead", hello: "Welcome to the help desk, {name}! Tickets come in on the left. Read each one, check any attachments, and ask me if you get stuck. Everyone breaks something in their first week. Don't panic." },
+  tasks: [
+    { id: "it-slow", tier: 1, type: "choice", from: ["Greg Holt", "Accounting"], subject: "My computer is SO slow",
+      msg: "Hi, my PC has been crawling all morning. Spreadsheets take forever to open. Can you fix it? I haven't restarted it in... maybe three weeks?",
+      ask: "What do you try first?", hint: "Start with the simplest, fastest fix. He mentioned something about three weeks...",
+      lesson: "Troubleshoot from simple to complex: restart first, then check what's eating resources in Task Manager (Ctrl+Shift+Esc), then dig deeper.",
+      options: [
+        { t: "Have Greg restart the PC, then check Task Manager if it's still slow", ok: true, fb: "Restarting clears memory and stuck programs. It fixes a surprising number of tickets." },
+        { t: "Reinstall Windows to start fresh", fb: "That wipes his setup and takes hours. Way too big a first step." },
+        { t: "Order him a new computer", fb: "Expensive and slow. Nothing suggests the hardware is broken." },
+        { t: "Tell him computers just get slow sometimes", fb: "Greg is still stuck, and now he's annoyed. Your job is to fix it." } ] },
+    { id: "it-printer", tier: 1, type: "order", from: ["Nina Park", "Marketing"], subject: "Printer won't print",
+      msg: "I hit Print five times and nothing came out of the floor 2 printer. My presentation is in 20 minutes!",
+      ask: "Put your troubleshooting steps in the best order.", hint: "Check the physical things before touching software.",
+      lesson: "Work from physical to software: power, paper and error lights first, then print queues and services, and reinstalling drivers last.",
+      items: ["Check the printer is on, has paper and shows no error light", "Open the print queue and clear stuck jobs", "Restart the Print Spooler service on her PC", "Reinstall the printer driver"] },
+    { id: "it-reset", tier: 1, type: "choice", from: ["Caller: 'Mark'", "Phone"], subject: "Locked out before a big meeting",
+      msg: "<i>Phone rings.</i> \"Hi, this is Mark from Sales. I'm locked out and about to present to a huge client. Just reset my password and read it to me, quick!\"",
+      ask: "What do you do?", hint: "Anyone can say they're Mark. How would you know it's really him?",
+      lesson: "Always verify identity before resetting a password. Urgency and pressure are classic social engineering tricks.",
+      options: [
+        { t: "Verify his identity first (employee ID and a callback to the number on file), then reset", ok: true, fb: "Attackers fake urgency to skip checks. Verifying protects Mark and the company." },
+        { t: "Reset it and read the new password over the phone", fb: "You just handed an account to whoever called. That's how social engineering works." },
+        { t: "Hang up. Password resets aren't your job", fb: "They are your job. Mark may be real and really stuck." },
+        { t: "Email the new password to his personal Gmail", fb: "Sending credentials to an unverified outside address is a breach waiting to happen." } ] },
+    { id: "it-dns", tier: 2, type: "terminal", from: ["Lena Ortiz", "Finance"], subject: "Intranet won't load",
+      msg: "The intranet (intranet.brightline.local) won't load for me, but other websites work fine. Everyone else can get to it. Weird, right?",
+      ask: "Use the command prompt on Lena's PC to find and fix the problem.",
+      doc: { title: "Cheat sheet: network commands", html: `<table><tr><th>Command</th><th>What it does</th></tr><tr><td><code>ipconfig</code></td><td>Shows this PC's IP address and DNS server</td></tr><tr><td><code>ping &lt;host&gt;</code></td><td>Checks if a computer answers</td></tr><tr><td><code>nslookup &lt;host&gt;</code></td><td>Asks the DNS server which IP a name has</td></tr><tr><td><code>ipconfig /displaydns</code></td><td>Shows DNS answers this PC has remembered</td></tr><tr><td><code>ipconfig /flushdns</code></td><td>Forgets all remembered DNS answers</td></tr></table>` },
+      hint: "Ping tries 10.0.9.99, but nslookup says the real address is different. Something on her PC remembers an old answer.",
+      lesson: "When a server's address changes, PCs can keep a stale DNS answer in their cache. Compare ping with nslookup, then clear the cache with ipconfig /flushdns.",
+      prompt: "C:\\Users\\lortiz>", intro: "Microsoft Windows [Version 6.1.7601]  (Lena's PC)",
+      help: "ipconfig   ipconfig /displaydns   ipconfig /flushdns   ping <host>   nslookup <host>   cls",
+      commands: [
+        { re: /^ipconfig$/i, run: () => "IPv4 Address . . : 10.0.4.57\nSubnet Mask . . . : 255.255.255.0\nDefault Gateway . : 10.0.4.1\nDNS Server  . . . : 10.0.0.10" },
+        { re: /^ipconfig \/displaydns$/i, run: (m, st) => st.flushed ? "(cache is empty)" : "intranet.brightline.local\n  Record Type . . : A\n  Time To Live  . : 604511\n  A (Host) Record : 10.0.9.99" },
+        { re: /^ipconfig \/flushdns$/i, run: (m, st) => { st.flushed = true; return "Successfully flushed the DNS Resolver Cache."; } },
+        { re: /^nslookup\s+intranet(\.brightline\.local)?$/i, run: () => "Server:  dns01.brightline.local\nAddress: 10.0.0.10\n\nName:    intranet.brightline.local\nAddress: 10.0.2.20" },
+        { re: /^ping\s+intranet(\.brightline\.local)?$/i, run: (m, st) => st.flushed
+            ? { out: "Pinging intranet.brightline.local [10.0.2.20]\nReply from 10.0.2.20: time=2ms\nReply from 10.0.2.20: time=1ms", win: "You spotted the stale DNS cache and flushed it. Lena's intranet works again.", winOut: "✔ Intranet reachable. Lena says it loads now!" }
+            : "Pinging intranet.brightline.local [10.0.9.99]\nRequest timed out.\nRequest timed out.\nRequest timed out." },
+        { re: /^ping\s+(\S+)$/i, run: m => `Pinging ${m[1]}\nReply: time=14ms\nReply: time=13ms` },
+        { re: /^nslookup\s+(\S+)$/i, run: m => `Server:  dns01.brightline.local\nName:    ${m[1]}\nAddress: 93.184.216.34` },
+        { re: /^(format|del|rmdir|rd)\b/i, run: () => ({ fail: "You started deleting files on a coworker's PC. Never run destructive commands while troubleshooting." }) },
+        { re: /^shutdown/i, run: () => ({ fail: "You shut down Lena's PC mid-spreadsheet. She lost an hour of work." }) }
+      ] },
+    { id: "it-ports", tier: 2, type: "match", from: ["Dana Okafor", "IT Lead"], subject: "Firewall basics check",
+      msg: "We're updating firewall rules this week. Before I let you near them, match each port number to its service.",
+      ask: "Match the ports.", hint: "443 is the padlock in your browser. 53 turns names into addresses.",
+      lesson: "Common ports: 22 SSH, 25 SMTP (email), 53 DNS, 80 HTTP, 443 HTTPS. Firewalls allow or block traffic by port.",
+      pairs: [["22", "SSH: secure remote login"], ["25", "SMTP: sending email"], ["53", "DNS: name lookups"], ["80", "HTTP: websites"], ["443", "HTTPS: secure websites"]] },
+    { id: "it-triage", tier: 2, type: "sort", from: ["Dana Okafor", "IT Lead"], subject: "Monday ticket pile-up",
+      msg: "It's Monday. Sort these tickets by priority.<br><b>P1</b> = many people blocked. <b>P2</b> = one team slowed down. <b>P3</b> = one person, and a workaround exists.",
+      ask: "Assign a priority to each ticket.", hint: "Count how many people are affected and how badly.",
+      lesson: "Prioritize by impact (how many people) and urgency (how soon it hurts). A whole floor offline beats one broken mouse.",
+      buckets: ["P1", "P2", "P3"],
+      items: [{ t: "Whole sales floor has no internet", b: 0 }, { t: "Email is down for everyone", b: 0 }, { t: "Shared drive is slow for Accounting", b: 1 }, { t: "Floor 2 printer is jammed", b: 1 }, { t: "One user's mouse double-clicks", b: 2 }, { t: "New hire needs Photoshop next week", b: 2 }] },
+    { id: "it-subnet", tier: 3, type: "input", from: ["Raj Mehta", "Network Engineer"], subject: "Subnet for the new branch",
+      msg: "We're giving the new branch office a <b>/26</b> network. I need two numbers for the router config.",
+      doc: { title: "Subnetting basics (with a /27 example)", html: `<p>An IPv4 address has 32 bits. The number after the slash is how many bits are the network. The rest are for hosts.</p><p><b>Example /27:</b> 32 − 27 = 5 host bits. 2<sup>5</sup> = 32 addresses. Minus 2 (network + broadcast) = <b>30 usable hosts</b>.</p><p>Mask: 27 ones. The last octet is 11100000 = 128+64+32 = <b>224</b>, so 255.255.255.224.</p>` },
+      ask: "Work out the numbers for a /26.", hint: "32 − 26 = 6 host bits. 2⁶ = 64. Last octet is 11000000.",
+      lesson: "Usable hosts = 2^(32 − prefix) − 2. A /26 has 62 usable hosts and mask 255.255.255.192.",
+      fields: [{ label: "Usable hosts", answer: 62 }, { label: "Subnet mask", answer: "255.255.255.192" }] },
+    { id: "it-ransom", tier: 3, curveball: true, type: "choice", from: ["Front desk", "Reception"], subject: "URGENT: red screen on a PC",
+      msg: "A PC at reception shows a red screen: <b>\"YOUR FILES ARE ENCRYPTED. Pay 2 Bitcoin in 48 hours.\"</b> Files on the shared drive are getting renamed to <code>.locked</code>!",
+      ask: "First move?", hint: "It's spreading through the network right now. Stop the spread.",
+      lesson: "Ransomware response: isolate first (pull the network cable or turn off Wi-Fi), then escalate to security. Every second counts.",
+      options: [
+        { t: "Disconnect the PC from the network immediately, then alert Security", ok: true, fb: "Isolating stops the ransomware spreading to the shared drive and other machines." },
+        { t: "Restart the PC to clear it", fb: "Restarting can trigger more encryption and destroys evidence in memory." },
+        { t: "Pay the ransom so files come back fast", fb: "Paying funds criminals and doesn't guarantee recovery. And it's not your call." },
+        { t: "Email a warning to all staff from that PC", fb: "That PC is compromised, and while you typed it kept encrypting the shared drive." } ] }
+  ]
+});
+
+/* ---------- Cybersecurity ---------- */
+JOBS.push({
+  id: "cyber", dept: "Cybersecurity", floor: 4, icon: "shield", color: "#6a3fc1", role: "SOC Analyst",
+  blurb: "Watch for attacks, investigate alerts, protect the company.",
+  mentor: { name: "Marcus Lee", title: "Security Lead", hello: "Hey {name}, welcome to the Security Operations Center. Attackers only need to be lucky once. We need to be careful every time. Read the evidence before you act." },
+  tasks: [
+    { id: "cy-phish", tier: 1, type: "multi", from: ["Priya Shah", "Finance"], subject: "Is this email legit?",
+      msg: `Priya forwarded this:<div class="doc" style="padding:10px 12px;margin-top:8px;background:#fff"><b>From:</b> Brightline Payroll &lt;payroll@brightline-hr-portal.net&gt;<br><b>Subject:</b> Action required: confirm direct deposit within 2 hours<br><br>Dear Employee,<br>Your direct deposit will be cancelled unless you confirm your bank details within 2 hours.<br><u>Update my details</u><br><br>Attachment: <b>payslip_Nov.pdf.exe</b></div>`,
+      ask: "Select every red flag.", hint: "Check the sender's domain, the deadline, the greeting and the attachment's last extension.",
+      lesson: "Phishing red flags: lookalike domains, urgent deadlines, generic greetings, odd attachments (.exe, .js) and links that don't match the real site.",
+      items: [{ t: "The sender domain isn't brightline.com", ok: true }, { t: "A 2-hour deadline creates pressure", ok: true }, { t: "Generic greeting: \"Dear Employee\"", ok: true }, { t: "The attachment ends in .exe", ok: true }, { t: "It mentions payroll", ok: false }, { t: "It was sent on a weekday", ok: false }] },
+    { id: "cy-pass", tier: 1, type: "choice", from: ["Marcus Lee", "Security Lead"], subject: "Password poster",
+      msg: "HR is making a security poster and wants an example of a strong password. Which one should we print?",
+      ask: "Pick the strongest password.", hint: "Length matters more than symbols.",
+      lesson: "Length beats complexity. Four or more random words make a strong passphrase. Add multi-factor authentication (MFA) on top.",
+      options: [
+        { t: "<code>tide-lamp-orbit-cactus-81</code>", ok: true, fb: "Long passphrases are easy to remember and very hard to crack." },
+        { t: "<code>P@ssw0rd!</code>", fb: "Swapping letters for symbols is the first trick cracking tools try." },
+        { t: "<code>Brightline2026</code>", fb: "Company name plus year is on every attacker's guess list." },
+        { t: "<code>qwertyuiop</code>", fb: "Keyboard patterns get cracked instantly." } ] },
+    { id: "cy-brute", tier: 2, type: "terminal", from: ["Marcus Lee", "Security Lead"], subject: "VPN brute force alert",
+      msg: "The alert system flagged a spike in failed VPN logins. Find the attacker's IP in <code>auth.log</code> and block it with <code>block &lt;ip&gt;</code>. Careful: don't block our own office.",
+      ask: "Investigate the log and block the attacker.", hint: "Use grep Failed auth.log. Look for one IP trying many different usernames. Our office IPs start with 198.51.100.",
+      lesson: "Many failed logins from one IP against many usernames is a brute-force attack. grep searches thousands of log lines in a second. Confirm before you block.",
+      prompt: "analyst@soc:~$", intro: "SOC workstation. Logs are in this folder.",
+      help: "ls   cat <file>   grep <word> <file>   block <ip>   clear",
+      commands: (() => {
+        const log = ["Nov 25 08:01:12 vpn: Accepted password for jsmith from 198.51.100.14", "Nov 25 08:03:40 vpn: Failed password for admin from 203.0.113.77", "Nov 25 08:03:41 vpn: Failed password for root from 203.0.113.77", "Nov 25 08:03:41 vpn: Failed password for test from 203.0.113.77", "Nov 25 08:03:55 vpn: Failed password for mlee from 198.51.100.22", "Nov 25 08:04:02 vpn: Accepted password for mlee from 198.51.100.22", "Nov 25 08:04:03 vpn: Failed password for backup from 203.0.113.77", "Nov 25 08:04:03 vpn: Failed password for oracle from 203.0.113.77", "Nov 25 08:04:04 vpn: Failed password for admin from 203.0.113.77", "Nov 25 08:04:05 vpn: Failed password for guest from 203.0.113.77"];
+        return [
+          { re: /^ls$/i, run: () => "auth.log   notes.txt" },
+          { re: /^cat\s+auth\.log$/i, run: () => log.join("\n") },
+          { re: /^cat\s+notes\.txt$/i, run: () => "Office network: 198.51.100.0/24 (all our staff IPs start 198.51.100.)" },
+          { re: /^grep\s+(\S+)\s+auth\.log$/i, run: m => log.filter(l => l.toLowerCase().includes(m[1].replace(/["']/g, "").toLowerCase())).join("\n") || "(no matches)" },
+          { re: /^block\s+203\.0\.113\.77$/i, run: () => ({ win: "You found the brute-force IP and blocked it without touching the office network.", winOut: "✔ 203.0.113.77 blocked at the firewall. Failed logins dropped to zero." }) },
+          { re: /^block\s+198\.51\.100\.\d+$/i, run: () => ({ fail: "That's one of our office IPs. A coworker just lost VPN access while the real attacker kept going." }) },
+          { re: /^block\s+(\S+)$/i, run: m => ({ out: `No log entries from ${m[1]}. Check the log again.`, cls: "t-err" }) },
+          { re: /^(cat|grep)\b/i, run: () => ({ out: "No such file. Try ls.", cls: "t-err" }) }
+        ];
+      })() },
+    { id: "cy-threats", tier: 2, type: "match", from: ["Marcus Lee", "Security Lead"], subject: "Threat briefing",
+      msg: "Leadership wants a one-page threat briefing. Match each attack to what it does.", ask: "Match the attacks.",
+      hint: "Ransom = money. Injection = sneaking commands in. DDoS = flood.",
+      lesson: "Know the big five: phishing (tricking people), ransomware (encrypting files for money), brute force (guessing passwords), SQL injection (attacking databases through forms) and DDoS (flooding with traffic).",
+      pairs: [["Phishing", "Fake messages that trick people into clicking or sharing"], ["Ransomware", "Malware that encrypts files and demands payment"], ["Brute force", "Guessing passwords over and over"], ["SQL injection", "Sneaking database commands into a web form"], ["DDoS", "Flooding a site with traffic until it falls over"]] },
+    { id: "cy-sqli", tier: 2, type: "choice", from: ["Sam Rivera", "Engineering"], subject: "Login form bug",
+      msg: "A tester typed <code>' OR 1=1 --</code> as the username and got logged in as admin. Here's the code:",
+      doc: { title: "login.js", html: `<pre class="code">query = "SELECT * FROM users WHERE name = '" + name +
+        "' AND pass = '" + pass + "'";</pre>` },
+      ask: "What's the right fix?", hint: "The problem is that input becomes part of the SQL code.",
+      lesson: "SQL injection happens when user input is glued into a query. Parameterized queries (prepared statements) keep data and code separate.",
+      options: [
+        { t: "Use parameterized queries so input is always treated as data", ok: true, fb: "Exactly. The database never runs user input as SQL." },
+        { t: "Remove apostrophes from the input", fb: "Blocklists always miss something, and it breaks names like O'Brien." },
+        { t: "Hide the login page's URL", fb: "Security through obscurity. Attackers find it anyway." },
+        { t: "Add a CAPTCHA", fb: "That slows bots. It doesn't stop injection." } ] },
+    { id: "cy-alerts", tier: 3, type: "sort", from: ["Marcus Lee", "Security Lead"], subject: "Alert triage shift",
+      msg: "You're on alert duty. Decide which alerts are real threats and which are false alarms.", ask: "Triage each alert.",
+      hint: "Think about volume, timing and whether it's normal for that person.",
+      lesson: "Triage is about context: how much, when, who and from where. Too many false alarms cause alert fatigue, so tuning alerts matters.",
+      buckets: ["Real threat", "False alarm"],
+      items: [{ t: "500 failed logins from one IP in 2 minutes", b: 0 }, { t: "New admin account created at 3:12 AM by an unknown user", b: 0 }, { t: "40 GB uploaded to an unknown overseas server overnight", b: 0 }, { t: "Antivirus flagged a vendor-signed update (known false-positive bug)", b: 1 }, { t: "Employee logged in from the office at 9:02 AM", b: 1 }, { t: "User mistyped a password twice, then logged in", b: 1 }] },
+    { id: "cy-ir", tier: 3, curveball: true, type: "order", from: ["Marcus Lee", "Security Lead"], subject: "URGENT: confirmed breach",
+      msg: "An attacker got into a file server. The CEO is on the phone. Walk me through the incident response steps, in order. Fast.",
+      ask: "Order the incident response steps.", hint: "You can't clean up before you stop the spread.",
+      lesson: "Incident response: Identify → Contain → Eradicate → Recover → Lessons learned. Containing early limits the damage.",
+      items: ["Identify: confirm what happened and which systems are affected", "Contain: isolate the server so the attacker can't spread", "Eradicate: remove the malware and close the hole they used", "Recover: restore clean systems and watch them closely", "Lessons learned: write it up and improve defenses"] }
+  ]
+});
+
+/* ---------- Software development ---------- */
+JOBS.push({
+  id: "dev", dept: "Software Development", floor: 5, icon: "code", color: "#159a8a", role: "Software Developer",
+  blurb: "Write and fix the code behind the company's website.",
+  mentor: { name: "Sam Rivera", title: "Senior Engineer", hello: "Hi {name}! Welcome to the dev team. Run your tests before you submit. Shipping broken code is the most common rookie mistake. Ask me anything." },
+  tasks: [
+    { id: "dv-eq", tier: 1, type: "choice", from: ["QA Bot", "Testing"], subject: "Bug: everyone is 18",
+      msg: "Bug report: every user gets treated as 18 years old, even kids. Here's the function:",
+      doc: { title: "age.js", html: `<pre class="code">function checkAge(user) {
+  if (user.age = 18) {
+    return "adult";
+  }
+  return "minor";
+}</pre>` },
+      ask: "What's the bug?", hint: "Look very closely at the if statement. How many = signs?",
+      lesson: "= assigns a value, === compares. A single = inside an if is a classic bug that silently changes your data.",
+      options: [
+        { t: "<code>=</code> assigns 18 to age. It should be a comparison like <code>&gt;= 18</code>", ok: true, fb: "Right. The if sets every user's age to 18, and 18 is truthy." },
+        { t: "18 should be in quotes", fb: "Ages are numbers. Quotes would make it a string." },
+        { t: "There's a missing semicolon after the if", fb: "Semicolons don't go after if conditions." },
+        { t: "user.age doesn't exist", fb: "It exists. The problem is what the code does to it." } ] },
+    { id: "dv-name", tier: 1, type: "code", from: ["Alicia Grant", "HR"], subject: "Staff directory names",
+      msg: "The new staff directory needs names shown as <b>Last, First</b>. Could you write the function?",
+      ask: "Write formatName(first, last).", hint: "Join strings with +: <code>return last + \", \" + first;</code>",
+      lesson: "Functions take inputs (parameters) and return an output. Strings join with + or with template literals.",
+      fn: "formatName", starter: `// Return the name as "Last, First"
+// formatName("Ada", "Lovelace") should return "Lovelace, Ada"
+function formatName(first, last) {
+  return "";
+}
+`,
+      tests: [{ args: ["Ada", "Lovelace"], want: "Lovelace, Ada" }, { args: ["Grace", "Hopper"], want: "Hopper, Grace" }, { args: ["Alan", "Turing"], want: "Turing, Alan" }] },
+    { id: "dv-err", tier: 1, type: "choice", from: ["Jo Kim", "Junior Developer"], subject: "What does this error mean?",
+      msg: "Help, my page crashes with: <code>TypeError: Cannot read properties of undefined (reading 'name')</code>",
+      ask: "What does it mean?", hint: "Read it literally: it tried to read 'name' from something.",
+      lesson: "Read errors literally. 'Reading name of undefined' means the thing before .name doesn't exist yet. Find where it was supposed to come from.",
+      options: [
+        { t: "Code did <code>something.name</code>, but <code>something</code> is undefined", ok: true, fb: "Yes. Usually data that hasn't loaded yet or a typo in a variable name." },
+        { t: "The HTML has a typo", fb: "This is a JavaScript error about a missing object." },
+        { t: "JavaScript can't use the word 'name'", fb: "name is a perfectly fine property." },
+        { t: "The server is down", fb: "A server problem would give a network error, not this." } ] },
+    { id: "dv-cart", tier: 2, type: "code", from: ["Jordan Blake", "Sales"], subject: "Cart total is wrong!",
+      msg: "Customers are seeing the wrong cart total and complaining. Each cart item has a <code>price</code> and a <code>qty</code>.",
+      ask: "Write cartTotal(items).", hint: "<code>for (const item of items) { total += item.price * item.qty; }</code>",
+      lesson: "Loops process lists. Start an accumulator at 0 and add to it for each item.",
+      fn: "cartTotal", starter: `// items looks like: [{ name: "Mug", price: 12.5, qty: 2 }, ...]
+// Return the total cost: price x qty for every item, added up.
+function cartTotal(items) {
+  let total = 0;
+  // TODO: loop over items
+  return total;
+}
+`,
+      tests: [{ args: [[{ name: "Pen", price: 10, qty: 1 }]], want: 10 }, { args: [[{ name: "Mug", price: 12.5, qty: 2 }, { name: "Tea", price: 3, qty: 4 }]], want: 37 }, { args: [[]], want: 0 }] },
+    { id: "dv-git", tier: 2, type: "order", from: ["Sam Rivera", "Senior Engineer"], subject: "Your first pull request",
+      msg: "Time to ship your first fix through git. Put the workflow in order.", ask: "Order the git workflow.",
+      hint: "Get the latest code before you branch. Review happens before merge.",
+      lesson: "Branches keep your work separate. Pull requests let teammates review your code before it reaches everyone.",
+      items: ["<code>git pull</code> to get the latest code", "<code>git checkout -b fix-cart</code> to make your own branch", "Edit the code and test it", "<code>git commit</code> to save a snapshot", "<code>git push</code> to upload your branch", "Open a pull request and get it reviewed", "Merge after approval"] },
+    { id: "dv-disc", tier: 3, type: "code", from: ["Mia Torres", "Marketing"], subject: "Discount codes for the big sale",
+      msg: "Black Friday! <code>SAVE10</code> = 10% off. <code>FLAT5</code> = $5 off, but never below $0. Any other code = no discount. Round to 2 decimals.",
+      ask: "Write applyDiscount(total, code).", hint: "Use if / else if / else. <code>Math.max(0, total - 5)</code> blocks negatives. <code>Math.round(x * 100) / 100</code> rounds.",
+      lesson: "Business rules become if/else branches. Test the edge cases (tiny totals, unknown codes, rounding), because that's where bugs hide.",
+      fn: "applyDiscount", starter: `function applyDiscount(total, code) {
+  // SAVE10 -> 10% off
+  // FLAT5  -> $5 off, never below 0
+  // anything else -> no change
+  // round the result to 2 decimals
+  return total;
+}
+`,
+      tests: [{ args: [100, "SAVE10"], want: 90 }, { args: [20, "FLAT5"], want: 15 }, { args: [3, "FLAT5"], want: 0 }, { args: [59.99, "SAVE10"], want: 53.99 }, { args: [50, "BOGUS"], want: 50 }] },
+    { id: "dv-dupe", tier: 3, curveball: true, type: "code", from: ["Mia Torres", "Marketing"], subject: "URGENT: newsletter double-sending",
+      msg: "The mailing list has duplicates like <code>Bob@x.com</code> and <code>bob@x.com</code>, and people get two emails. The next send goes out in minutes!",
+      ask: "Write dedupeEmails(list): lowercase everything, remove duplicates, keep first-seen order.", hint: "A Set remembers what you've seen: <code>seen.has(e)</code>, <code>seen.add(e)</code>. Use <code>e.toLowerCase()</code>.",
+      lesson: "A Set stores unique values and checks membership fast. Normalize data (like lowercasing emails) before comparing it.",
+      fn: "dedupeEmails", starter: `function dedupeEmails(list) {
+  const result = [];
+  // TODO
+  return result;
+}
+`,
+      tests: [{ args: [["a@x.com", "A@x.com", "b@x.com"]], want: ["a@x.com", "b@x.com"] }, { args: [["Bob@X.com", "bob@x.com", "Sue@y.org", "sue@Y.org", "al@z.net"]], want: ["bob@x.com", "sue@y.org", "al@z.net"] }, { args: [[]], want: [] }] }
+  ]
+});
+
+/* ---------- Logistics ---------- */
+JOBS.push({
+  id: "logi", dept: "Logistics", floor: 2, icon: "truck", color: "#e07b1a", role: "Logistics Coordinator",
+  blurb: "Plan shipments, pick carriers, keep deliveries on time.",
+  mentor: { name: "Rosa Delgado", title: "Logistics Manager", hello: "Welcome aboard, {name}! In logistics, every mistake costs money or a customer. Check the rate sheets, do the math twice, and tell customers bad news early." },
+  tasks: [
+    { id: "lg-method", tier: 1, type: "choice", from: ["Jordan Blake", "Sales"], subject: "Ship this by Thursday",
+      msg: "A customer needs a 20 lb box delivered within 2 business days. Please pick the cheapest option that makes it.",
+      doc: { title: "Carrier rate sheet", html: `<table><tr><th>Service</th><th>Transit</th><th>Price</th></tr><tr><td>Ground</td><td>5 days</td><td>$8</td></tr><tr><td>Two-Day</td><td>2 days</td><td>$18</td></tr><tr><td>Overnight</td><td>1 day</td><td>$35</td></tr><tr><td>Freight (150 lb+)</td><td>7 days</td><td>$5</td></tr></table>` },
+      ask: "Which service do you book?", hint: "Rule out anything too slow, then pick the cheapest of what's left.",
+      lesson: "Pick the cheapest option that meets the deadline. Paying for speed you don't need eats profit.",
+      options: [{ t: "Two-Day, $18", ok: true, fb: "Meets the deadline at the lowest possible price." }, { t: "Ground, $8", fb: "Cheapest, but it arrives 3 days late." }, { t: "Overnight, $35", fb: "On time, but you spent $17 more than you needed to." }, { t: "Freight, $5", fb: "Freight is for 150 lb+ and takes a week." }] },
+    { id: "lg-weight", tier: 1, type: "input", from: ["Dock team", "Shipping"], subject: "Weight for the label",
+      msg: "We're shipping 12 boxes of printer paper. Each box weighs 4.5 kg. What's the total weight for the carrier label?",
+      ask: "Enter the total weight.", hint: "Number of boxes × weight per box.",
+      lesson: "Total weight = units × weight per unit. Carriers bill by weight, so a wrong label means surprise fees.",
+      fields: [{ label: "Total weight", answer: 54, suffix: "kg" }] },
+    { id: "lg-eta", tier: 2, type: "input", from: ["Harbor Foods", "Customer call"], subject: "When will the truck arrive?",
+      msg: "The truck leaves our depot at 7:30. It's 360 km at an average of 80 km/h, and the driver must take a 45-minute break. Harbor Foods wants an arrival time.",
+      doc: { title: "Formula", html: "Driving time = distance ÷ speed. ETA = departure + driving time + breaks." },
+      ask: "Arrival time (24-hour clock, like 13:05)?", hint: "360 ÷ 80 = 4.5 hours. Add that and the break to 7:30.",
+      lesson: "ETA = departure + (distance ÷ speed) + breaks. 7:30 + 4h30 + 0:45 = 12:45.",
+      fields: [{ label: "Arrival time", answer: ["12:45", "12.45", "1245"] }] },
+    { id: "lg-trucks", tier: 2, type: "input", from: ["Rosa Delgado", "Logistics Manager"], subject: "How many trucks?",
+      msg: "An order is 40 pallets. A 53-ft trailer fits 26 standard pallets. How many trucks do we book?",
+      ask: "Number of trucks.", hint: "You can't send 1.5 trucks.",
+      lesson: "Round up when you can't split a vehicle: 40 ÷ 26 = 1.54, so 2 trucks. The spare space on truck 2 could carry another customer's freight.",
+      fields: [{ label: "Trucks", answer: 2 }] },
+    { id: "lg-intl", tier: 2, type: "order", from: ["Rosa Delgado", "Logistics Manager"], subject: "First international order",
+      msg: "A customer in Canada ordered 300 units. Put the shipping process in order.", ask: "Order the steps.",
+      hint: "Paperwork has to be ready before the carrier picks up.",
+      lesson: "International shipping depends on paperwork. Missing customs documents can leave freight stuck at the border for weeks.",
+      items: ["Confirm order details and delivery address", "Prepare the commercial invoice and customs paperwork", "Book the carrier and pickup", "Send tracking info to the customer", "Monitor the shipment until it's delivered"] },
+    { id: "lg-rop", tier: 3, type: "input", from: ["Rosa Delgado", "Logistics Manager"], subject: "When do we reorder?",
+      msg: "We sell about 40 units of SKU-220 a day. The supplier takes 5 days to deliver, and we keep 60 units as safety stock.",
+      doc: { title: "Reorder point", html: "<b>Reorder point = (daily demand × lead time in days) + safety stock</b><br>When stock drops to this number, place a new order." },
+      ask: "At what stock level should we reorder?", hint: "40 × 5, then add the safety stock.",
+      lesson: "Reorder point = demand during lead time + safety stock. 40 × 5 + 60 = 260. Too low and you run out; too high and cash sits on shelves.",
+      fields: [{ label: "Reorder point", answer: 260, suffix: "units" }] },
+    { id: "lg-break", tier: 3, curveball: true, type: "choice", from: ["Driver: Tom", "Radio"], subject: "URGENT: truck broke down",
+      msg: "Truck 14 broke down 200 km out with Harbor Foods' order. They need it by 8 AM tomorrow for a restaurant opening.",
+      ask: "What do you do?", hint: "Think about the customer and about a backup plan.",
+      lesson: "When things go wrong, communicate early and line up a plan B. Customers forgive delays. They don't forgive surprises.",
+      options: [{ t: "Call Harbor Foods now with an honest update, and book a backup carrier to transfer the load", ok: true, fb: "Proactive and solution-focused. The customer trusts you more after this." }, { t: "Wait for the repair and hope it's quick", fb: "Hope isn't a plan. If the repair takes all night, the customer finds out at 8 AM." }, { t: "Cancel the order and refund it", fb: "You gave up and lost the customer when a fix was possible." }, { t: "Say nothing until you know more", fb: "Silence turns a delay into a broken promise." }] }
+  ]
+});
+
+/* ---------- Warehouse ---------- */
+JOBS.push({
+  id: "wh", dept: "Warehouse", floor: 1, icon: "boxes", color: "#9a6a2e", role: "Warehouse Associate",
+  blurb: "Receive, store, pick and ship products. Safely.",
+  mentor: { name: "Lou Martin", title: "Shift Supervisor", hello: "Morning, {name}! Safety first, speed second, accuracy always. Hi-vis vest on? Good. Let's move some boxes." },
+  tasks: [
+    { id: "wh-zones", tier: 1, type: "sort", from: ["Lou Martin", "Shift Supervisor"], subject: "Put-away: mixed truck",
+      msg: "A mixed truck just arrived. Send each item to the right storage zone.", ask: "Sort the items into zones.",
+      hint: "Hazmat means chemicals and anything that can catch fire. Lithium batteries count.",
+      lesson: "Storage zones protect products and people. Hazardous materials like chemicals and lithium batteries need separate, labeled storage.",
+      buckets: ["Frozen", "Chilled", "Dry", "Hazmat"],
+      items: [{ t: "Ice cream", b: 0 }, { t: "Frozen pizza", b: 0 }, { t: "Milk", b: 1 }, { t: "Yogurt", b: 1 }, { t: "Rice", b: 2 }, { t: "Cereal", b: 2 }, { t: "Bleach", b: 3 }, { t: "Lithium batteries", b: 3 }] },
+    { id: "wh-lift", tier: 1, type: "choice", from: ["Lou Martin", "Shift Supervisor"], subject: "Lifting a 25 kg box",
+      msg: "You need to move a 25 kg box from the floor to a cart.", ask: "How do you lift it?", hint: "Your legs are stronger than your back.",
+      lesson: "Bend your knees, keep your back straight, hold the load close and don't twist. Back injuries are the most common warehouse injury.",
+      options: [{ t: "Bend your knees, keep your back straight, hold it close, lift with your legs", ok: true, fb: "Textbook. Your back thanks you." }, { t: "Bend at the waist and lift fast", fb: "That's how backs get hurt. You're out for a week." }, { t: "Lift it above your head to carry it", fb: "Unstable, and you can't see where you're going." }, { t: "Twist while lifting to save time", fb: "Twisting under load is a top cause of back injury." }] },
+    { id: "wh-bin", tier: 1, type: "input", from: ["Picker: Ana", "Radio"], subject: "Where's SKU-4471?",
+      msg: "\"Hey new hire, where's SKU-4471? I'm standing in aisle A.\"",
+      doc: { title: "Bin locations (Aisle-Rack-Shelf)", html: `<table><tr><th>SKU</th><th>Location</th></tr><tr><td>SKU-1180</td><td>A-04-2</td></tr><tr><td>SKU-4417</td><td>B-21-3</td></tr><tr><td>SKU-4471</td><td>B-12-3</td></tr><tr><td>SKU-5520</td><td>C-01-1</td></tr></table>` },
+      ask: "Which location do you tell her?", hint: "Careful: 4471 and 4417 look alike.",
+      lesson: "Location codes like B-12-3 mean Aisle B, Rack 12, Shelf 3. Double-check lookalike numbers. Mis-picks are expensive.",
+      fields: [{ label: "Location", answer: "B-12-3" }] },
+    { id: "wh-route", tier: 2, type: "order", from: ["Lou Martin", "Shift Supervisor"], subject: "Plan your pick route",
+      msg: "Pick these 5 items. House rule: walk aisles A → B → C, and within an aisle go from low to high numbers.", ask: "Order your stops.",
+      hint: "All the A's first, lowest number first.",
+      lesson: "A planned pick path stops you zig-zagging. Pickers can walk 15+ km a shift, so route order saves real time.",
+      items: ["A-02: Tape guns", "A-15: Box cutters", "B-04: Bubble wrap", "C-01: Pallet wrap", "C-10: Shipping labels"] },
+    { id: "wh-fefo", tier: 2, type: "choice", from: ["Lou Martin", "Shift Supervisor"], subject: "Which milk ships first?",
+      msg: "Three pallets of milk are in the chiller. Which one goes on today's truck?", ask: "Pick the pallet.",
+      hint: "Which one will spoil first if it sits here?",
+      lesson: "FEFO: first expired, first out. Ship the stock that expires soonest so nothing spoils on the shelf.",
+      options: [{ t: "Pallet C: expires Nov 29", ok: true, fb: "Soonest expiry ships first. Nothing goes to waste." }, { t: "Pallet A: expires Dec 6 (freshest)", fb: "Now Pallet C will expire in the warehouse." }, { t: "Pallet B: expires Dec 2", fb: "Not the oldest. Pallet C is at risk." }, { t: "Whichever is closest to the door", fb: "Convenient, but you'll end up throwing old stock away." }] },
+    { id: "wh-count", tier: 2, type: "input", from: ["Inventory system", "Alert"], subject: "Cycle count mismatch",
+      msg: "The system says bin C-07 holds 120 headsets. You counted 114.",
+      doc: { title: "Formulas", html: "Variance = counted − system<br>Shrink % = units missing ÷ system count × 100" },
+      ask: "Work out the variance and shrink percentage.", hint: "114 − 120. Then 6 ÷ 120 × 100.",
+      lesson: "Variance = counted − system. Shrink % = missing ÷ expected × 100. Then investigate: mis-picks, damage, theft or receiving errors.",
+      fields: [{ label: "Variance", answer: -6, suffix: "units" }, { label: "Shrink", answer: 5, suffix: "%" }] },
+    { id: "wh-damage", tier: 3, type: "multi", from: ["Dock 3", "Receiving"], subject: "Damaged delivery",
+      msg: "A pallet arrived crushed and leaking. The driver is impatient and wants a signature now.", ask: "Select everything you should do.",
+      hint: "Once you sign 'received in good condition', the damage is officially your problem.",
+      lesson: "Document damage before you sign. A clean signature tells the carrier everything was fine, so you can't claim later.",
+      items: [{ t: "Photograph the damage", ok: true }, { t: "Write the damage on the delivery receipt before signing", ok: true }, { t: "Quarantine the damaged goods away from good stock", ok: true }, { t: "Notify the supplier and carrier", ok: true }, { t: "Sign 'received in good condition' to keep things moving", ok: false }, { t: "Throw the packaging away", ok: false }] },
+    { id: "wh-fork", tier: 3, curveball: true, type: "choice", from: ["You", "Aisle C"], subject: "URGENT: unsafe forklift",
+      msg: "A coworker is driving a forklift fast with the load raised high, right next to people walking.", ask: "What do you do?",
+      hint: "Safety is everyone's job, but don't put yourself in danger.",
+      lesson: "Everyone owns safety. A raised load makes a forklift tip. Stop the unsafe act from a safe place and report it. Never step into a forklift's path.",
+      options: [{ t: "Signal them to stop from a safe spot, and report it to the supervisor", ok: true, fb: "You may have just prevented a serious accident." }, { t: "Ignore it, it's not your business", fb: "The load tipped two minutes later. Safety is everyone's business." }, { t: "Run in front of the forklift to stop it", fb: "Now there are two people in danger." }, { t: "Film it for the group chat", fb: "Not helpful, and not what a teammate does." }] }
+  ]
+});
+
+/* ---------- Sales ---------- */
+JOBS.push({
+  id: "sales", dept: "Sales", floor: 6, icon: "chart", color: "#3a9e2e", role: "Sales Representative",
+  blurb: "Find customers, understand their needs, close deals.",
+  mentor: { name: "Jordan Blake", title: "Sales Manager", hello: "{name}! Welcome to the sales floor. Big secret: great salespeople listen more than they talk. Ask questions, solve problems, never lie. Let's go." },
+  tasks: [
+    { id: "sl-open", tier: 1, type: "choice", from: ["Jordan Blake", "Sales Manager"], subject: "Your first discovery call",
+      msg: "You're calling Lisa, the office manager at a 50-person firm that might need new printers.", ask: "How do you open?",
+      hint: "You don't know what she needs yet.",
+      lesson: "Discovery first: open-ended questions reveal real needs. Pitch later, and tie it to what they told you.",
+      options: [{ t: "Ask about her current setup and what frustrates her team", ok: true, fb: "She talks for 5 minutes and tells you exactly what to sell." }, { t: "Read the full product feature list", fb: "She stopped listening at feature three." }, { t: "Offer a discount right away", fb: "You cut your price before she even showed interest." }, { t: "\"Do you want to buy printers today?\"", fb: "Too early. She said no and hung up." }] },
+    { id: "sl-q", tier: 1, type: "sort", from: ["Jordan Blake", "Sales Manager"], subject: "Open vs. closed questions",
+      msg: "Sort these questions. Open questions get people talking; closed ones get yes/no answers.", ask: "Sort each question.",
+      hint: "Can it be answered with one word?",
+      lesson: "Open questions (what, how, why) get people talking. Closed questions (yes/no) confirm facts. Good reps use both.",
+      buckets: ["Open", "Closed"],
+      items: [{ t: "What's slowing your team down right now?", b: 0 }, { t: "How do you choose new vendors?", b: 0 }, { t: "What would success look like for you?", b: 0 }, { t: "Do you have a budget?", b: 1 }, { t: "Is Friday okay for a demo?", b: 1 }, { t: "Are you the decision-maker?", b: 1 }] },
+    { id: "sl-obj", tier: 2, type: "choice", from: ["Lisa (prospect)", "Phone"], subject: "\"It's too expensive\"",
+      msg: "\"Honestly, your quote is more than what we pay now.\"", ask: "How do you respond?",
+      hint: "An objection is usually a question in disguise.",
+      lesson: "Objections are questions in disguise. Explore them and sell value (total cost, time saved) before you touch the price.",
+      options: [{ t: "Ask what she's comparing it to, and show savings from fewer repairs and cheaper toner", ok: true, fb: "Over 3 years you're actually cheaper. She asks for a contract." }, { t: "Drop the price 20% immediately", fb: "You gave away profit without understanding the concern." }, { t: "\"You get what you pay for.\"", fb: "Sounds rude. She's now talking to a competitor." }, { t: "Say okay and end the call", fb: "You gave up on a deal that was winnable." }] },
+    { id: "sl-comm", tier: 2, type: "input", from: ["Helen Park", "Accounting"], subject: "Your commission check",
+      msg: "You closed $24,000 in sales this month. Commission is 5% of sales, plus a $200 bonus for going over $20,000.",
+      ask: "How much commission do you earn?", hint: "24,000 × 0.05, then add the bonus.",
+      lesson: "Know how you're paid. 5% of $24,000 = $1,200, plus the $200 bonus = $1,400.",
+      fields: [{ label: "Commission", answer: 1400, prefix: "$" }] },
+    { id: "sl-pipe", tier: 2, type: "order", from: ["Jordan Blake", "Sales Manager"], subject: "The sales pipeline",
+      msg: "Every deal moves through the same stages. Put them in order.", ask: "Order the pipeline.",
+      hint: "You can't send a proposal before you understand their problem.",
+      lesson: "Pipeline: Prospect → Qualify → Discovery → Proposal → Negotiation → Close. Managers forecast revenue from these stages.",
+      items: ["Prospect: find potential customers", "Qualify: check budget, need and authority", "Discovery: learn their problems", "Proposal: send a tailored quote", "Negotiation: agree on terms", "Close: get the signed deal"] },
+    { id: "sl-floor", tier: 3, type: "input", from: ["Lisa (prospect)", "Email"], subject: "How low can you go?",
+      msg: "List price is $1,250. You're allowed to discount up to 12%. Lisa asks for your best price.",
+      ask: "What's the lowest price you can quote?", hint: "1,250 × (1 − 0.12).",
+      lesson: "Know your floor before negotiating: 1,250 × 0.88 = $1,100. Trade discounts for something (longer contract, faster payment).",
+      fields: [{ label: "Lowest price", answer: 1100, prefix: "$" }] },
+    { id: "sl-lie", tier: 3, curveball: true, type: "choice", from: ["BigCo (prospect)", "Phone"], subject: "URGENT: the deal-breaker question",
+      msg: "Your biggest prospect, about to sign: \"Does your printer scan straight into our CRM? That's a deal-breaker.\" It doesn't. Not yet.",
+      ask: "What do you say?", hint: "What happens after they sign and find out?",
+      lesson: "Never promise what doesn't exist. Lost trust costs more than one lost deal, and false claims can be a legal problem.",
+      options: [{ t: "Be honest, and offer to check the roadmap or find a workaround", ok: true, fb: "They appreciate the honesty. A workaround keeps the deal alive." }, { t: "Say yes. The product team will figure it out", fb: "They signed, found out, cancelled and told everyone." }, { t: "Change the subject", fb: "They noticed. Trust drops." }, { t: "Say yes, with a disclaimer in tiny print", fb: "Misleading customers is a fast way to lawsuits." }] }
+  ]
+});
+
+/* ---------- Accounting ---------- */
+JOBS.push({
+  id: "acct", dept: "Accounting", floor: 7, icon: "calc", color: "#0f8f74", role: "Accounts Clerk",
+  blurb: "Track every dollar: invoices, payments, the books.",
+  mentor: { name: "Helen Park", title: "Controller", hello: "Welcome, {name}. In accounting, the numbers have to balance to the penny. Check everything twice, and never pay anything you can't verify." },
+  tasks: [
+    { id: "ac-types", tier: 1, type: "sort", from: ["Helen Park", "Controller"], subject: "Sort the accounts",
+      msg: "Sort each ledger account into the right category.", ask: "Asset, liability or expense?",
+      hint: "Own it = asset. Owe it = liability. Spent it to run the business = expense.",
+      lesson: "Assets are what you own. Liabilities are what you owe. Expenses are the costs of running the business.",
+      buckets: ["Asset", "Liability", "Expense"],
+      items: [{ t: "Cash", b: 0 }, { t: "Equipment", b: 0 }, { t: "Inventory", b: 0 }, { t: "Bank loan", b: 1 }, { t: "Accounts payable", b: 1 }, { t: "Rent expense", b: 2 }, { t: "Electricity bill", b: 2 }] },
+    { id: "ac-inv", tier: 1, type: "input", from: ["Jordan Blake", "Sales"], subject: "Build this invoice",
+      msg: "Can you total up this order for the customer invoice?",
+      doc: { title: "Order #1042", html: `<table><tr><th>Item</th><th>Qty</th><th>Unit price</th></tr><tr><td>Desk chair</td><td>3</td><td>$120</td></tr><tr><td>Monitor</td><td>2</td><td>$180</td></tr><tr><td>Notebook</td><td>10</td><td>$4</td></tr></table><p>Sales tax: 8% on the subtotal.</p>` },
+      ask: "Fill in the invoice.", hint: "Subtotal = (3×120) + (2×180) + (10×4). Tax = subtotal × 0.08.",
+      lesson: "Invoice math: line totals (qty × price) → subtotal → tax → total. Customers notice mistakes in their invoices fast.",
+      fields: [{ label: "Subtotal", answer: 760, prefix: "$" }, { label: "Tax", answer: 60.8, prefix: "$" }, { label: "Total", answer: 820.8, prefix: "$" }] },
+    { id: "ac-je", tier: 2, type: "choice", from: ["Helen Park", "Controller"], subject: "Record this transaction",
+      msg: "We paid $500 rent in cash.", ask: "Which journal entry is right?",
+      hint: "Rent expense goes up. Cash goes down. Expenses increase with a debit.",
+      lesson: "Double-entry bookkeeping: every transaction has equal debits and credits. Expenses go up with a debit; cash (an asset) goes down with a credit.",
+      options: [{ t: "Debit Rent Expense $500 / Credit Cash $500", ok: true, fb: "Balanced and correct." }, { t: "Debit Cash $500 / Credit Rent Expense $500", fb: "That's backwards: it says we received cash." }, { t: "Debit Rent Expense $500 / Debit Cash $500", fb: "Two debits, no credit. The books won't balance." }, { t: "Credit Rent Expense $500 only", fb: "Every entry needs both sides." }] },
+    { id: "ac-3way", tier: 2, type: "choice", from: ["SteelCorp", "Vendor invoice"], subject: "This invoice doesn't match",
+      msg: "Vendor invoice: 100 boxes × $8 = $800. Purchase order: 100 boxes. Receiving report: <b>90 boxes</b> arrived.", ask: "What do you do?",
+      hint: "Three documents should agree before money leaves.",
+      lesson: "Three-way match: the purchase order, receiving report and invoice must agree before you pay.",
+      options: [{ t: "Hold the invoice and contact the vendor about the 10 missing boxes", ok: true, fb: "They ship the rest. You saved $80 and kept the records clean." }, { t: "Pay the full $800, they're a good vendor", fb: "You paid for 10 boxes we never got." }, { t: "Quietly pay $720 and say nothing", fb: "The vendor's records won't match, and they'll chase you as late." }, { t: "Throw the invoice away", fb: "Now it'll go overdue, with late fees." }] },
+    { id: "ac-rec", tier: 2, type: "input", from: ["Helen Park", "Controller"], subject: "Bank reconciliation",
+      msg: "Our books show $5,200. We wrote $800 in checks that haven't cleared the bank yet, and made a $300 deposit the bank hasn't recorded yet.",
+      doc: { title: "Reconciliation", html: "Bank balance + deposits in transit − outstanding checks = book balance" },
+      ask: "What should the bank statement show?", hint: "Rearrange: bank = book − deposits in transit + outstanding checks.",
+      lesson: "Reconciling explains the difference between the books and the bank. Unexplained differences can mean errors or fraud.",
+      fields: [{ label: "Bank balance", answer: 5700, prefix: "$" }] },
+    { id: "ac-dep", tier: 3, type: "input", from: ["Helen Park", "Controller"], subject: "Depreciate the new van",
+      msg: "We bought a delivery van for $12,000. It should last 5 years and be worth $2,000 at the end.",
+      doc: { title: "Straight-line depreciation", html: "(Cost − salvage value) ÷ useful life in years" },
+      ask: "Annual depreciation?", hint: "(12,000 − 2,000) ÷ 5.",
+      lesson: "Depreciation spreads an asset's cost over its useful life. Straight-line: ($12,000 − $2,000) ÷ 5 = $2,000 a year.",
+      fields: [{ label: "Per year", answer: 2000, prefix: "$" }] },
+    { id: "ac-bec", tier: 3, curveball: true, type: "choice", from: ["accounts@steelcorp-billing.com", "Email"], subject: "URGENT: new bank details",
+      msg: "\"We've changed banks. Please send today's $48,000 payment to the new account below. This is urgent!\"",
+      ask: "What do you do?", hint: "Is that the vendor's real domain? How could you check without trusting this email?",
+      lesson: "Business email compromise: fraudsters pretend to be vendors. Verify any bank-detail change by calling a phone number you already have on file, never one from the email.",
+      options: [{ t: "Hold the payment and call SteelCorp on the number already on file", ok: true, fb: "SteelCorp never sent it. You just stopped a $48,000 fraud." }, { t: "Update the details and pay, it's urgent", fb: "$48,000 went to a fraudster. It's gone." }, { t: "Reply to the email and ask if it's real", fb: "The scammer replied, \"Yes, it's real!\"" }, { t: "Pay half now and half later", fb: "You still sent $24,000 to criminals." }] }
+  ]
+});
+
+/* ---------- HR ---------- */
+JOBS.push({
+  id: "hr", dept: "Human Resources", floor: 8, icon: "people", color: "#cf4d88", role: "HR Coordinator",
+  blurb: "Hire, onboard and support the people who make the company run.",
+  mentor: { name: "Alicia Grant", title: "HR Manager", hello: "Welcome to HR, {name}! Our job is to be fair, follow the law, and look after people. When something feels sensitive, slow down and follow policy." },
+  tasks: [
+    { id: "hr-hire", tier: 1, type: "order", from: ["Alicia Grant", "HR Manager"], subject: "Hiring a receptionist",
+      msg: "Reception needs a new hire. Put the hiring steps in order.", ask: "Order the hiring process.",
+      hint: "You can't interview anyone until people apply.",
+      lesson: "Hiring: post → screen → interview → references → offer → onboard. Skipping steps leads to bad hires.",
+      items: ["Write and post the job description", "Screen the resumes", "Interview candidates", "Check references", "Make an offer", "Onboard the new hire"] },
+    { id: "hr-legal", tier: 1, type: "multi", from: ["A hiring manager", "Email"], subject: "Interview questions check",
+      msg: "A manager sent their interview question list for review.", ask: "Select every question that is NOT allowed.",
+      hint: "Questions about protected traits (age, religion, family, origin) are off-limits.",
+      lesson: "Ask about the job, not personal traits. Age, religion, family plans and national origin are protected and can't be used in hiring decisions (exact rules vary by country).",
+      items: [{ t: "How old are you?", ok: true }, { t: "Are you planning to have kids?", ok: true }, { t: "What religion do you practice?", ok: true }, { t: "Where were your parents born?", ok: true }, { t: "Tell me about a time you solved a conflict.", ok: false }, { t: "Can you work the required Saturday shifts?", ok: false }, { t: "Are you legally authorized to work here?", ok: false }] },
+    { id: "hr-pto", tier: 2, type: "input", from: ["Ben Ruiz", "Warehouse"], subject: "How much vacation do I have?",
+      msg: "Ben earns 1.25 vacation days per month. He has worked 8 months and has used 4 days.", ask: "What's his balance?",
+      hint: "1.25 × 8, then subtract what he used.",
+      lesson: "PTO balance = accrued − used. 1.25 × 8 = 10, minus 4 = 6 days. Accurate balances avoid payroll disputes.",
+      fields: [{ label: "Balance", answer: 6, suffix: "days" }] },
+    { id: "hr-complaint", tier: 2, type: "choice", from: ["An employee", "Private meeting"], subject: "A difficult complaint",
+      msg: "An employee says their manager keeps making comments about their appearance. They ask you to \"keep it secret and do nothing.\"",
+      ask: "How do you respond?", hint: "Can HR legally ignore possible harassment once it knows?",
+      lesson: "HR can't promise total secrecy once it learns of possible harassment. Listen, document, follow policy and protect the person from retaliation.",
+      options: [{ t: "Thank them, document it, and explain you must follow policy, keeping it as confidential as possible", ok: true, fb: "Honest, supportive and legally correct." }, { t: "Promise total secrecy and do nothing", fb: "If it continues, the company (and you) failed to act on a known problem." }, { t: "Tell them to toughen up", fb: "Dismissive, and possibly illegal." }, { t: "Confront the manager in front of the team", fb: "Public, unfair to everyone, and it exposes the employee." }] },
+    { id: "hr-onboard", tier: 2, type: "multi", from: ["Alicia Grant", "HR Manager"], subject: "Day-one checklist",
+      msg: "A new hire starts Monday.", ask: "Select what belongs on the day-one checklist.", hint: "Day one, not year one.",
+      lesson: "Great onboarding makes new hires productive and keeps them around. Have equipment, paperwork, introductions and safety ready on day one.",
+      items: [{ t: "Laptop and accounts ready", ok: true }, { t: "Tax and payroll forms", ok: true }, { t: "Welcome and team introductions", ok: true }, { t: "Safety and security training", ok: true }, { t: "Annual performance review", ok: false }, { t: "Exit interview", ok: false }] },
+    { id: "hr-ot", tier: 3, type: "input", from: ["Payroll", "System"], subject: "Overtime paycheck",
+      msg: "Hourly rate: $22. Hours worked this week: 46. Overtime pays 1.5× for hours over 40.", ask: "Gross pay for the week?",
+      hint: "40 × 22, plus 6 overtime hours × (22 × 1.5).",
+      lesson: "Overtime: regular hours at base rate + extra hours at 1.5×. 40 × $22 + 6 × $33 = $1,078.",
+      fields: [{ label: "Gross pay", answer: 1078, prefix: "$" }] },
+    { id: "hr-leak", tier: 3, curveball: true, type: "choice", from: ["Everyone", "All-staff email"], subject: "URGENT: salary file sent to everyone",
+      msg: "Someone just emailed the full salary spreadsheet to the all-company list.", ask: "What do you do?",
+      hint: "Contain, escalate, communicate.",
+      lesson: "Data incidents: contain fast (IT can often pull emails back), escalate to leadership, communicate clearly, then investigate fairly before any discipline.",
+      options: [{ t: "Get IT to recall the email, inform leadership, and ask staff to delete it", ok: true, fb: "IT pulled it from most inboxes within minutes." }, { t: "Ignore it, maybe nobody opens it", fb: "Everyone opened it." }, { t: "Reply-all saying \"please delete\"", fb: "Now it's at the top of everyone's inbox." }, { t: "Find who sent it and fire them on the spot", fb: "No investigation, and it may have been a simple mistake." }] }
+  ]
+});
+
+/* ---------- Management ---------- */
+JOBS.push({
+  id: "mgmt", dept: "Management", floor: 9, icon: "case", color: "#4c5e73", role: "Team Lead",
+  blurb: "Lead a team, set priorities, solve people problems.",
+  mentor: { name: "Victor Chen", title: "Operations Director", hello: "Congratulations on the new role, {name}. Managing is about people first and tasks second. Be fair, be clear, and never surprise anyone in public." },
+  tasks: [
+    { id: "mg-conflict", tier: 1, type: "choice", from: ["Your team", "Open office"], subject: "Two teammates are arguing",
+      msg: "Two of your team members keep snapping at each other in meetings. Others are getting uncomfortable.", ask: "What do you do?",
+      hint: "Private first, then together.",
+      lesson: "Handle conflict early: hear each person privately, then meet together and focus on behavior and solutions, not personalities.",
+      options: [{ t: "Talk to each privately, then meet together and focus on solutions", ok: true, fb: "They agree on how to work together. Meetings calm down." }, { t: "Side with the one you like more", fb: "Now the team thinks you play favorites." }, { t: "Ignore it, they're adults", fb: "It got worse, and one of them quit." }, { t: "Bring it up at the all-hands meeting", fb: "Public embarrassment made both of them angrier." }] },
+    { id: "mg-matrix", tier: 1, type: "sort", from: ["Victor Chen", "Operations Director"], subject: "Your Monday to-do list",
+      msg: "Use the Eisenhower matrix. <b>Do now</b>: urgent and important. <b>Schedule</b>: important, not urgent. <b>Delegate</b>: urgent, not important for you. <b>Drop</b>: neither.",
+      ask: "Sort your tasks.", hint: "Ask two questions for each: is it urgent, and does it need you?",
+      lesson: "The Eisenhower matrix: do urgent and important things now, schedule important ones, delegate urgent but routine ones, and drop the rest.",
+      buckets: ["Do now", "Schedule", "Delegate", "Drop"],
+      items: [{ t: "Outage affecting customers", b: 0 }, { t: "Client contract expires today", b: 0 }, { t: "Plan next quarter's training", b: 1 }, { t: "Write team goals for next month", b: 1 }, { t: "Book meeting rooms for the offsite", b: 2 }, { t: "Compile weekly report numbers", b: 2 }, { t: "Reorganize your desktop icons", b: 3 }, { t: "Read a newsletter you never signed up for", b: 3 }] },
+    { id: "mg-sbi", tier: 2, type: "order", from: ["Victor Chen", "Operations Director"], subject: "Giving feedback",
+      msg: "A teammate keeps joining client calls late. Order the conversation using the SBI model (Situation, Behavior, Impact).", ask: "Order the feedback.",
+      hint: "Describe facts first, then the effect, then listen.",
+      lesson: "SBI feedback: Situation → Behavior → Impact, then ask for their side and agree on next steps. It stays factual instead of personal.",
+      items: ["Situation: \"In yesterday's 10 AM client call…\"", "Behavior: \"…you joined 15 minutes late…\"", "Impact: \"…the client had to repeat everything and seemed frustrated.\"", "Ask for their side: \"What's going on?\"", "Agree on next steps together"] },
+    { id: "mg-cpm", tier: 2, type: "input", from: ["Victor Chen", "Operations Director"], subject: "When does the project finish?",
+      msg: "Leadership wants a launch date. Some tasks can run at the same time, others have to wait.",
+      doc: { title: "Project plan", html: `<table><tr><th>Task</th><th>Days</th><th>Can start after</th></tr><tr><td>A: Design</td><td>3</td><td>(start)</td></tr><tr><td>B: Build</td><td>5</td><td>A</td></tr><tr><td>C: Write docs</td><td>2</td><td>A</td></tr><tr><td>D: Launch</td><td>4</td><td>B and C</td></tr></table>` },
+      ask: "Minimum days to finish?", hint: "B and C run at the same time after A. D waits for the slower one.",
+      lesson: "The critical path is the longest chain of dependent tasks: A → B → D = 12 days. Task C has 3 days of slack.",
+      fields: [{ label: "Days", answer: 12 }] },
+    { id: "mg-smart", tier: 2, type: "choice", from: ["Victor Chen", "Operations Director"], subject: "Set a team goal",
+      msg: "Set a goal for the support team.", ask: "Which goal is SMART (Specific, Measurable, Achievable, Relevant, Time-bound)?",
+      hint: "Look for a number and a deadline.",
+      lesson: "SMART goals are Specific, Measurable, Achievable, Relevant and Time-bound. Vague goals can't be tracked.",
+      options: [{ t: "Cut average ticket response time from 6 hours to 3 hours by March 31", ok: true, fb: "Specific, measurable, realistic and dated." }, { t: "Do better at customer service", fb: "How would anyone know if you did it?" }, { t: "Answer every ticket instantly, forever", fb: "Not achievable and no deadline." }, { t: "Try to improve stuff soon", fb: "Nothing specific, nothing measurable." }] },
+    { id: "mg-budget", tier: 3, type: "input", from: ["Finance", "Report"], subject: "Over budget?",
+      msg: "Your team's quarterly budget was $50,000. You spent $56,500.", ask: "By what percent are you over budget?",
+      hint: "(56,500 − 50,000) ÷ 50,000 × 100.",
+      lesson: "Budget variance % = (actual − budget) ÷ budget × 100 = 13% over. Explain overruns early, with a plan.",
+      fields: [{ label: "Over by", answer: 13, suffix: "%" }] },
+    { id: "mg-star", tier: 3, curveball: true, type: "choice", from: ["Ana", "Your top performer"], subject: "URGENT: your star is slipping",
+      msg: "Ana, your best performer, has missed three deadlines this month and seems withdrawn. A client just complained.", ask: "What do you do?",
+      hint: "Something changed. Find out what before you judge.",
+      lesson: "When a strong performer suddenly struggles, start with a private, caring conversation. There's often a reason, like burnout or something personal.",
+      options: [{ t: "Book a private 1:1, ask how she's doing, and listen before talking about deadlines", ok: true, fb: "She's been caring for a sick parent. You adjust her workload and she bounces back." }, { t: "Send her a formal written warning", fb: "She felt blindsided and started job hunting." }, { t: "Quietly give her work to others", fb: "She noticed, felt sidelined, and nothing got fixed." }, { t: "Call her out in the team meeting", fb: "Public criticism destroyed her trust in you." }] }
+  ]
+});
+
+/* ---------- Customer support ---------- */
+JOBS.push({
+  id: "support", dept: "Customer Support", floor: 10, icon: "headset", color: "#d9a000", role: "Support Agent",
+  blurb: "Help customers, calm tough situations, route problems.",
+  mentor: { name: "Kim Nguyen", title: "Support Lead", hello: "Hi {name}, welcome to Support! Customers aren't angry at you. They're stressed about a problem. Listen, own it, fix it, and follow policy." },
+  tasks: [
+    { id: "su-angry", tier: 1, type: "choice", from: ["Customer chat", "Live chat"], subject: "An angry customer",
+      msg: "\"THIS IS THE THIRD TIME MY ORDER IS LATE. I'M DONE WITH YOU PEOPLE.\"", ask: "What do you reply?",
+      hint: "Acknowledge, apologize, act.",
+      lesson: "Acknowledge the feeling, apologize, take ownership, then act. Never say \"calm down\".",
+      options: [{ t: "\"I'm really sorry, that's frustrating. Let me look up your order right now and fix this.\"", ok: true, fb: "The customer calms down and thanks you." }, { t: "\"Please calm down.\"", fb: "They got angrier and asked for your manager." }, { t: "\"Our system shows nothing wrong.\"", fb: "Now they feel called a liar." }, { t: "\"That's the shipping department's fault.\"", fb: "Customers don't care whose fault it is. They want it fixed." }] },
+    { id: "su-flow", tier: 1, type: "order", from: ["Kim Nguyen", "Support Lead"], subject: "Ticket handling basics",
+      msg: "Put the steps of handling a support ticket in order.", ask: "Order the steps.",
+      hint: "Make sure you understand the problem and who they are before fixing anything.",
+      lesson: "Greet → understand → verify → solve → confirm → close and log. Logging helps the next agent and spots repeat problems.",
+      items: ["Greet the customer", "Understand the issue", "Verify their account", "Solve or troubleshoot", "Confirm it's fixed", "Close and log the ticket"] },
+    { id: "su-route", tier: 2, type: "sort", from: ["Kim Nguyen", "Support Lead"], subject: "Route these tickets",
+      msg: "These tickets need to go to the right department.", ask: "Route each ticket.",
+      hint: "Money → Accounting. Logins → IT. Packages → Logistics.",
+      lesson: "Routing tickets right the first time cuts resolution time. Every department depends on the others.",
+      buckets: ["Accounting", "IT", "Logistics", "HR", "Sales"],
+      items: [{ t: "I was charged twice", b: 0 }, { t: "I can't log in to my account", b: 1 }, { t: "Where is my package?", b: 2 }, { t: "Any update on my job application?", b: 3 }, { t: "Do you offer bulk pricing for 500 units?", b: 4 }, { t: "My invoice has the wrong tax", b: 0 }] },
+    { id: "su-refund", tier: 2, type: "choice", from: ["Customer email", "Email"], subject: "Refund request",
+      msg: "A customer bought headphones 40 days ago and wants a refund. They aren't broken. The customer just doesn't like them.",
+      doc: { title: "Return policy", html: "Days 0–30: full refund.<br>Days 31–60: store credit only.<br>After 60 days: no returns, except defective items under warranty." },
+      ask: "What do you offer?", hint: "Find day 40 in the policy.",
+      lesson: "Know the policy and apply it consistently. Explain it kindly. Consistency is fair to every customer.",
+      options: [{ t: "Store credit, and explain the 30-day refund window", ok: true, fb: "Fair, consistent, and the customer accepts." }, { t: "A full refund to keep them happy", fb: "That breaks policy. Now every customer will expect it." }, { t: "Refuse any return", fb: "Policy allows store credit. You were stricter than the rules." }, { t: "Tell them to buy something else", fb: "Unhelpful. They left a bad review." }] },
+    { id: "su-sla", tier: 3, type: "input", from: ["Ticket system", "SLA alert"], subject: "SLA deadline",
+      msg: "A priority ticket came in at 9:40. Our SLA (service level agreement) promises a first response within 4 hours.", ask: "Respond by what time? (24-hour, like 14:05)",
+      hint: "Add 4 hours to 9:40.",
+      lesson: "An SLA is a promise with a deadline. Missing SLAs can cost refunds or contracts, so track the clock on every ticket.",
+      fields: [{ label: "Respond by", answer: ["13:40", "1:40", "13.40", "1340"] }] },
+    { id: "su-threat", tier: 3, curveball: true, type: "choice", from: ["Customer call", "Phone"], subject: "URGENT: \"Free stuff or a 1-star review\"",
+      msg: "\"Give me a free year of service or I'm posting 1-star reviews everywhere.\" The actual problem: a 1-day delivery delay.", ask: "What do you do?",
+      hint: "Stay calm. What does policy allow for a delay?",
+      lesson: "Don't reward threats. Stay calm, apologize for the real problem, offer what policy allows, and escalate if needed.",
+      options: [{ t: "Stay calm, apologize, offer what policy allows (a shipping refund), and escalate if needed", ok: true, fb: "Professional. The customer accepts the shipping refund." }, { t: "Give them a free year immediately", fb: "Way out of proportion, and it teaches people that threats work." }, { t: "Threaten them back", fb: "Now that call recording is the review." }, { t: "Block the customer", fb: "The problem is still unsolved, and now they're furious." }] }
+  ]
+});
+
+const jobById = id => JOBS.find(j => j.id === id);
+
+/* =====================================================================
+   SCREENS
+   ===================================================================== */
+const app = $("#app");
+const stars = n => `<span class="stars" aria-label="${n} of 5 stars">${"★".repeat(n)}<span class="off">${"★".repeat(5 - n)}</span></span>`;
+const starsFor = p => p >= 90 ? 5 : p >= 75 ? 4 : p >= 60 ? 3 : p >= 40 ? 2 : 1;
+const titleFor = (job, xp) => `${LEVELS[lvl(xp)].name} ${job.role}`;
+const muteBtn = () => `<button class="btn grey sm" type="button" id="muteB">${S.muted ? "Sound: off" : "Sound: on"}</button>`;
+function wireMute() { const b = $("#muteB"); if (b) b.addEventListener("click", () => { S.muted = !S.muted; save(); b.textContent = S.muted ? "Sound: off" : "Sound: on"; Sfx.init(); Sfx.click(); }); }
+
+function showTitle() {
+  app.innerHTML = `<div class="title-screen"><div class="rays"></div><div class="title-card">
+    <div style="position:relative"><div class="logo">New Hire</div><div class="burst">${JOBS.length} jobs to try!</div></div>
+    <div class="logo-sub">SIMULATOR</div>
+    <p>It's your first day at <b>Brightline Corp</b>. Pick a department, clock in and learn the job as you go. Mistakes are part of it. That's how everyone learns.</p>
+    <div class="title-btns">${S.player ? `<button class="btn go big" type="button" id="cont">Continue as ${esc(S.player.name)}</button>` : ""}<button class="btn ${S.player ? "orange" : "go big"}" type="button" id="newc">${S.player ? "New character" : "Start your career"}</button></div>
+    ${muteBtn()}
+  </div></div>`;
+  wireMute();
+  if (S.player) $("#cont").addEventListener("click", () => { Sfx.init(); Sfx.ok(); showLobby(); });
+  $("#newc").addEventListener("click", () => { Sfx.init(); Sfx.click(); showCreate(); });
+}
+
+function showCreate() {
+  const a = S.player ? { ...S.player.av } : { skin: 1, hair: 0, shirt: 0, style: 0 };
+  const name = S.player ? S.player.name : "";
+  app.innerHTML = `<div class="wrap"><div class="panel create"><div class="bar">New employee registration <span class="dots"><i></i><i></i><i></i></span></div>
+    <div class="create-body"><div class="av-preview" id="avp">${avatar(a, 140)}</div><div>
+      <div class="field"><label for="pname">Your name</label><input type="text" id="pname" maxlength="18" value="${esc(name)}" placeholder="e.g. Sam Carter" autocomplete="off"></div>
+      <div class="field"><span class="lbl">Skin tone</span><div class="swatches" data-k="skin">${SKINS.map((c, i) => `<button class="sw" type="button" style="background:${c}" data-v="${i}" aria-label="Skin ${i + 1}" aria-pressed="${a.skin === i}"></button>`).join("")}</div></div>
+      <div class="field"><span class="lbl">Hair color</span><div class="swatches" data-k="hair">${HAIRS.map((c, i) => `<button class="sw" type="button" style="background:${c}" data-v="${i}" aria-label="Hair color ${i + 1}" aria-pressed="${a.hair === i}"></button>`).join("")}</div></div>
+      <div class="field"><span class="lbl">Hair style</span><div class="seg" data-k="style">${["Short", "Long", "Curly", "Buzz"].map((s, i) => `<button type="button" data-v="${i}" aria-pressed="${a.style === i}">${s}</button>`).join("")}</div></div>
+      <div class="field"><span class="lbl">Work shirt</span><div class="swatches" data-k="shirt">${SHIRTS.map((c, i) => `<button class="sw" type="button" style="background:${c}" data-v="${i}" aria-label="Shirt ${i + 1}" aria-pressed="${a.shirt === i}"></button>`).join("")}</div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn go big" type="button" id="hire">Get my badge</button><span class="small" id="cerr"></span></div>
+    </div></div></div></div>`;
+  $$("[data-k]").forEach(g => $$("button", g).forEach(b => b.addEventListener("click", () => {
+    a[g.dataset.k] = +b.dataset.v; $$("button", g).forEach(x => x.setAttribute("aria-pressed", String(x === b))); $("#avp").innerHTML = avatar(a, 140); Sfx.click();
+  })));
+  $("#hire").addEventListener("click", () => {
+    const n = $("#pname").value.trim();
+    if (!n) { $("#cerr").textContent = "Type your name so HR can print your badge."; $("#pname").focus(); return; }
+    S.player = { name: n, av: a };
+    save(); Sfx.ok(); showLobby();
+  });
+}
+
+function showLobby() {
+  const totalDays = Object.values(S.jobs).reduce((s, j) => s + j.days, 0);
+  const lessons = Object.values(S.jobs).reduce((s, j) => s + Object.keys(j.lessons).length, 0);
+  const d = DIFF[S.diff];
+  app.innerHTML = `<div class="wrap">
+    <div class="panel lobby-top"><div class="who">${avatar(S.player.av, 54)}<div><b>${esc(S.player.name)}</b><span class="small">Employee #${String(1000 + (S.player.name.length * 37) % 9000)} · Brightline Corp</span></div></div>
+      <div class="lobby-stats"><div><span class="stat-k">Bank account</span><span class="stat-v money">${money(S.money)}</span></div><div><span class="stat-k">Shifts worked</span><span class="stat-v">${totalDays}</span></div><div><span class="stat-k">Lessons learned</span><span class="stat-v">${lessons}</span></div>
+      <button class="btn grey sm" type="button" id="edit">Edit look</button>${muteBtn()}</div></div>
+    <div class="hq"><div><h2>Brightline Corp HQ</h2><p>Pick a floor and clock in. Every department is hiring.</p></div>
+      <div class="diff-box"><span class="lbl">Difficulty</span><div class="seg" id="diffSeg">${Object.entries(DIFF).map(([k, v]) => `<button type="button" data-d="${k}" aria-pressed="${S.diff === k}">${v.name} (${v.tag})</button>`).join("")}</div><span class="small" id="diffDesc">${d.desc}</span></div></div>
+    <div class="depts">${JOBS.slice().sort((a, b) => a.floor - b.floor).map(j => {
+      const js = S.jobs[j.id] || { xp: 0, days: 0, best: 0, lessons: {} }; const L = lvl(js.xp); const next = LEVELS[L + 1];
+      const pct = next ? Math.round((js.xp - LEVELS[L].xp) / (next.xp - LEVELS[L].xp) * 100) : 100;
+      return `<div class="panel dept"><div class="dept-head"><div class="tile" style="--c:${j.color}">${icon(j.icon)}</div><div><div class="floor">Floor ${j.floor}</div><h3>${j.dept}</h3></div></div>
+        <div class="dept-body"><div class="role">${js.days ? titleFor(j, js.xp) : j.role}</div><div class="small">${j.blurb}</div>
+        <div><div class="meter" title="${next ? `${js.xp} / ${next.xp} XP to ${next.name}` : "Max level"}"><i style="width:${pct}%;--c:${j.color}"></i></div>
+        <div class="small" style="display:flex;justify-content:space-between;margin-top:3px"><span>${next ? `${js.xp}/${next.xp} XP → ${next.name}` : "Top level reached"}</span><span>${js.days} shift${js.days === 1 ? "" : "s"}</span></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">Best shift</span>${js.days ? stars(js.best) : '<span class="small">not yet</span>'}</div>
+        <div class="dept-btns"><button class="btn go" type="button" data-go="${j.id}">${js.days ? "Clock in" : "Start job"}</button><button class="btn sm grey" type="button" data-j="${j.id}">Journal (${Object.keys(js.lessons || {}).length})</button></div></div></div>`;
+    }).join("")}<div class="panel dept soon"><div><b style="font-family:var(--head);font-size:16px">Floor ${JOBS.length + 1}: coming soon</b><br>More departments can be added to the building later.</div></div></div>
+  </div>`;
+  wireMute();
+  $("#edit").addEventListener("click", showCreate);
+  $$("#diffSeg button").forEach(b => b.addEventListener("click", () => { S.diff = b.dataset.d; save(); $$("#diffSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); $("#diffDesc").textContent = DIFF[S.diff].desc; Sfx.click(); }));
+  $$("[data-go]").forEach(b => b.addEventListener("click", () => { Sfx.ok(); startShift(b.dataset.go); }));
+  $$("[data-j]").forEach(b => b.addEventListener("click", () => showJournal(b.dataset.j)));
+}
+
+function showJournal(id) {
+  const j = jobById(id), js = jobState(id);
+  const learned = j.tasks.filter(t => js.lessons[t.id]);
+  const ov = document.createElement("div"); ov.className = "overlay";
+  ov.innerHTML = `<div class="panel modal" role="dialog" aria-label="Training journal"><div class="bar" style="--blue:${j.color}">Training journal: ${j.dept}</div><div class="m-body">
+    <p class="small">Every task you finish, right or wrong, adds a lesson here. ${learned.length} of ${j.tasks.length} learned.</p>
+    ${learned.length ? learned.map(t => `<div class="lesson"><b>${t.subject}</b> <span class="chip" style="--c:${js.done[t.id] === "ok" ? "var(--ok)" : "var(--bad)"}">${js.done[t.id] === "ok" ? "nailed it" : "learned the hard way"}</span><br>${t.lesson}</div>`).join("") : "<p>No lessons yet. Clock in to start learning.</p>"}
+    <div><button class="btn" type="button" id="jc">Close</button></div></div></div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  $("#jc", ov).addEventListener("click", close); ov.addEventListener("click", e => { if (e.target === ov) close(); });
+  $("#jc", ov).focus();
+}
+
+/* ---------- shift ---------- */
+let SH = null;
+function chooseTasks(job, js) {
+  const maxTier = Math.min(3, lvl(js.xp) + 1 + (S.diff === "hard" ? 1 : 0));
+  const pool = job.tasks.filter(t => !t.curveball).map(t => ({ t, score: (t.tier > maxTier ? 10 * (t.tier - maxTier) : 0) + (js.done[t.id] === "ok" ? 4 : js.done[t.id] === "fail" ? -1 : 0) + Math.random() * 3 }));
+  return pool.sort((a, b) => a.score - b.score).slice(0, SHIFT_TASKS).map(x => x.t).sort((a, b) => a.tier - b.tier);
+}
+function startShift(id) {
+  const job = jobById(id), js = jobState(id);
+  SH = { job, js, diff: DIFF[S.diff], queue: chooseTasks(job, js).map(t => ({ t, urgent: false })), i: 0, perf: 70, results: [], xp: 0, bonus: 0, curveDone: false, timer: null, sentHome: false };
+  renderShift();
+  mentorSay(job.mentor.hello.replace(/\{name\}/g, S.player.name.split(" ")[0]) + (js.days === 0 ? " This is your first day, so we'll start you on the basics." : ""));
+}
+const clockFor = i => { const total = Math.max(SH.queue.length, 1); const mins = 9 * 60 + Math.round(i / total * 8 * 60); const h = Math.floor(mins / 60), m = mins % 60; return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
+
+function renderShift() {
+  const { job, js } = SH;
+  app.innerHTML = `<div class="wrap">
+    <div class="panel hud"><div class="who">${avatar(S.player.av, 44)}<div><b>${esc(S.player.name)}</b><span class="small">${titleFor(job, js.xp)} · Day ${js.days + 1}</span></div></div>
+      <div class="clock" id="clk">${clockFor(SH.i)}</div>
+      <div class="grow"><span class="stat-k">Performance <span id="perfN">${SH.perf}%</span></span><div class="meter"><i id="perfBar" style="width:${SH.perf}%"></i></div></div>
+      <div><span class="stat-k">XP today</span><span class="stat-v" id="xpN">+${SH.xp}</span></div>
+      <span class="chip" style="--c:${S.diff === "hard" ? "var(--bad)" : S.diff === "easy" ? "var(--ok)" : "var(--blue)"}">${SH.diff.name}</span>
+      <button class="btn grey sm" type="button" id="quit">Leave shift</button></div>
+    <div class="shift">
+      <div class="panel inbox"><div class="bar" style="--blue:${job.color}">${job.dept} inbox</div><ul id="inbox"></ul></div>
+      <div><div class="panel" id="win"></div>
+        <div class="mentor">${avatar(hashAv(job.mentor.name), 64)}<div class="bubble" id="bub" aria-live="polite"></div></div></div>
+    </div>
+    <div class="taskbar"><span class="orb" aria-hidden="true"></span><span>${job.dept}: ${SH.queue.length} tasks today</span><span class="tclock" id="tclk">${clockFor(SH.i)}</span></div>
+  </div>`;
+  $("#quit").addEventListener("click", () => {
+    const b = $("#quit");
+    if (b.dataset.armed) { clearInterval(SH.timer); SH = null; showLobby(); return; }
+    b.dataset.armed = "1"; b.textContent = "Click again: leave without pay"; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "Leave shift"; } }, 3500);
+  });
+  drawInbox(); openTask();
+}
+function drawInbox() {
+  $("#inbox").innerHTML = SH.queue.map((q, k) => {
+    const r = SH.results[k]; const cls = [k === SH.i && !r ? "cur" : "", r ? (r.ok ? "ok" : "fail") : "", q.urgent ? "urgent" : "", k > SH.i ? "locked" : ""].join(" ");
+    return `<li class="${cls}"><span class="ic">${r ? (r.ok ? "✔" : "✘") : k === SH.i ? "▶" : "•"}</span><span><b>${q.t.subject}</b>${q.urgent ? '<span class="chip" style="--c:var(--bad)">URGENT</span> ' : ""}<span class="small">${q.t.from[0]}</span></span></li>`;
+  }).join("");
+}
+function mentorSay(text) { const b = $("#bub"); if (!b) return; b.innerHTML = `<b class="name">${SH.job.mentor.name.split(" ")[0]}:</b> ${text}`; }
+function floaty(txt, color, anchor) {
+  const r = (anchor || $("#perfBar")).getBoundingClientRect();
+  const f = document.createElement("div"); f.className = "floaty"; f.textContent = txt; f.style.color = color;
+  f.style.left = (r.left + r.width / 2 - 20) + "px"; f.style.top = (r.top - 10) + "px";
+  document.body.appendChild(f); setTimeout(() => f.remove(), 1300);
+}
+function setPerf(delta) {
+  SH.perf = Math.max(0, Math.min(100, SH.perf + delta));
+  $("#perfN").textContent = SH.perf + "%"; const bar = $("#perfBar"); bar.style.width = SH.perf + "%";
+  bar.style.setProperty("--c", SH.perf < 35 ? "var(--bad)" : SH.perf < 60 ? "var(--warn)" : "var(--go)");
+  if (delta) floaty((delta > 0 ? "+" : "") + delta + "%", delta > 0 ? "var(--ok)" : "var(--bad)");
+}
+
+function openTask() {
+  clearInterval(SH.timer);
+  const q = SH.queue[SH.i]; const t = q.t; const job = SH.job;
+  const limit = q.urgent ? (SH.diff.urgent || 0) : (SH.diff.timer || 0);
+  const hintCost = SH.diff.hint;
+  $("#clk").textContent = $("#tclk").textContent = clockFor(SH.i);
+  const win = $("#win");
+  win.innerHTML = `<div class="bar" style="--blue:${q.urgent ? "var(--bad)" : job.color}">${q.urgent ? "URGENT: " : ""}${t.subject}<span class="dots"><i></i><i></i><i></i></span></div>
+    <div class="win-body">
+      <div class="from">${avatar(hashAv(t.from[0]), 40)}<div><b>${t.from[0]}</b><div class="small">${t.from[1]} · ${"●".repeat(t.tier)}${"○".repeat(3 - t.tier)} difficulty</div></div>${limit ? `<span class="timer" id="tmr">${limit}s</span>` : ""}</div>
+      <div class="msg-text"><p>${t.msg}</p></div>
+      ${t.doc ? `<details class="doc" open><summary>Attachment: ${t.doc.title}</summary><div class="doc-in">${t.doc.html}</div></details>` : ""}
+      <div class="ask">${t.ask}</div>
+      <div id="widget"></div>
+      <div id="res"></div>
+    </div>
+    <div class="foot" id="foot"><button class="btn orange sm" type="button" id="hintB">Ask ${job.mentor.name.split(" ")[0]}${hintCost ? ` (${hintCost}%)` : " (free)"}</button><span class="warn" id="warn"></span><span style="flex:1"></span><button class="btn go" type="button" id="subB">Submit</button></div>`;
+  let finished = false, hinted = false;
+  const ctx = {
+    finish(ok, msg) {
+      if (finished) return; finished = true; clearInterval(SH.timer);
+      const xpGain = ok ? Math.round(t.tier * 10 * SH.diff.xp * (q.urgent ? 2 : 1)) : 2;
+      SH.xp += xpGain; $("#xpN").textContent = "+" + SH.xp;
+      SH.results[SH.i] = { ok, t, urgent: q.urgent };
+      if (ok && q.urgent) SH.bonus += 25;
+      setPerf(ok ? SH.diff.right + (q.urgent ? 4 : 0) : SH.diff.wrong);
+      SH.js.done[t.id] = ok ? "ok" : (SH.js.done[t.id] === "ok" ? "ok" : "fail"); SH.js.lessons[t.id] = true; save();
+      if (ok) Sfx.ok(); else { Sfx.bad(); win.classList.remove("shake"); void win.offsetWidth; if (!REDUCED) win.classList.add("shake"); }
+      $("#foot").innerHTML = `<span class="small">+${xpGain} XP</span><span style="flex:1"></span><button class="btn go" type="button" id="nextB">${SH.perf <= 0 ? "Uh oh…" : SH.i + 1 >= SH.queue.length ? "Finish shift" : "Next task"}</button>`;
+      $("#res").innerHTML = `<div class="result ${ok ? "good" : "bad"}"><h3>${ok ? pick(["Nice work!", "Nailed it!", "Great job!", "Solid!"]) : pick(["Oops, that's a mistake", "Not quite", "That didn't go well"])}</h3><div>${msg || ""}</div><div class="lesson"><b>What you learned:</b> ${t.lesson}</div></div>`;
+      mentorSay(ok ? pick(["That's how it's done.", "You're picking this up fast!", "Exactly what I would have done.", "See? You're a natural."]) : pick(["Don't sweat it. Read the lesson; you'll get it next time.", "Everyone makes that mistake once. Now you know.", "That one's tricky. Remember it for next time.", "Mistakes are how you learn this job. Shake it off."]));
+      const nb = $("#nextB"), born = Date.now(); nb.addEventListener("click", () => { if (Date.now() - born > 400) nextTask(); }); setTimeout(() => nb.isConnected && nb.focus(), 450);
+      drawInbox();
+    }
+  };
+  const w = W[t.type]($("#widget"), t, ctx);
+  if (w.noSubmit) $("#subB").remove();
+  else $("#subB").addEventListener("click", () => {
+    const r = w.submit(); if (r.incomplete) { $("#warn").textContent = r.incomplete; Sfx.bad(); return; }
+    ctx.finish(r.ok, r.msg);
+  });
+  $("#hintB").addEventListener("click", () => {
+    if (finished) return;
+    mentorSay(t.hint); Sfx.click();
+    if (!hinted && hintCost) { setPerf(hintCost); } hinted = true;
+    $("#hintB").disabled = true;
+  });
+  if (limit) {
+    const t0 = Date.now(); let last = limit;
+    SH.timer = setInterval(() => {
+      const el = $("#tmr"); if (!el) { clearInterval(SH.timer); return; }
+      const left = Math.max(0, Math.ceil(limit - (Date.now() - t0) / 1000));
+      if (left !== last) { last = left; el.textContent = left + "s"; if (left <= 10) Sfx.tick(); }
+      if (left <= 0) ctx.finish(false, "Time ran out. The problem got escalated over your head.");
+    }, 250);
+  }
+  if (q.urgent) mentorSay("This one's urgent. Stay calm, read carefully, then act.");
+}
+function nextTask() {
+  if (SH.perf <= 0) { SH.sentHome = true; return endShift(); }
+  if (!SH.curveDone && SH.i === 1 && Math.random() < SH.diff.curve) {
+    SH.curveDone = true;
+    const seen = new Set(SH.queue.map(q => q.t.id));
+    const cands = SH.job.tasks.filter(t => t.curveball && !seen.has(t.id));
+    const fallback = SH.job.tasks.filter(t => t.tier === 3 && !seen.has(t.id));
+    const c = pick(cands.length ? cands : fallback);
+    if (c) {
+      SH.queue.splice(SH.i + 1, 0, { t: c, urgent: true });
+      const n = $("#notif"); $("#notifBody").innerHTML = `<b>${esc(c.from[0])}:</b> ${c.subject.replace(/^URGENT:\s*/, "")}`;
+      n.classList.add("show"); Sfx.alarm(); setTimeout(() => n.classList.remove("show"), 3800);
+      $(".taskbar span:nth-child(2)").textContent = `${SH.job.dept}: ${SH.queue.length} tasks today`;
+    }
+  }
+  SH.i++;
+  if (SH.i >= SH.queue.length) return endShift();
+  drawInbox(); openTask();
+  window.scrollTo({ top: Math.min(window.scrollY, $("#win").getBoundingClientRect().top + window.scrollY - 10), behavior: REDUCED ? "auto" : "smooth" });
+}
+function endShift() {
+  clearInterval(SH.timer);
+  const { job, js } = SH;
+  const right = SH.results.filter(r => r && r.ok).length, wrong = SH.results.filter(r => r && !r.ok).length;
+  const before = lvl(js.xp);
+  const lvlNow = LEVELS[before];
+  const pay = SH.sentHome ? Math.round(lvlNow.pay * .3) : Math.round(lvlNow.pay * SH.diff.pay * (.5 + SH.perf / 200)) + SH.bonus;
+  const st = SH.sentHome ? 1 : starsFor(SH.perf);
+  js.xp += SH.xp; js.days++; js.best = Math.max(js.best || 0, st); S.money += pay; save();
+  const after = lvl(js.xp); const promoted = after > before;
+  const learned = SH.results.filter(Boolean).map(r => r.t);
+  app.innerHTML = `<div class="wrap"><div class="panel review"><div class="bar" style="--blue:${job.color}">End of shift report: ${job.dept}, day ${js.days}</div>
+    <div class="rv-body">
+      <div class="stamp ${SH.sentHome ? "badday" : ""}">${SH.sentHome ? "SENT HOME EARLY" : "SHIFT COMPLETE"}</div>
+      <div style="font-size:30px">${stars(st)}</div>
+      <p style="margin:0;max-width:46ch">${SH.sentHome ? `${job.mentor.name.split(" ")[0]} sent you home to reset. Tough day, but every mistake taught you something. Come back tomorrow.` : st >= 4 ? `${job.mentor.name.split(" ")[0]}: "Outstanding work today. Keep this up and you'll be running this place."` : st >= 3 ? `${job.mentor.name.split(" ")[0]}: "Good day. A few slips, but you're learning fast."` : `${job.mentor.name.split(" ")[0]}: "Rough one. Read your journal tonight and you'll do better tomorrow."`}</p>
+      ${promoted ? `<div class="promo">PROMOTED! You're now ${titleFor(job, js.xp)}</div>` : ""}
+      <table class="rv-table"><tr><td>Tasks done right</td><td style="color:var(--ok)">${right}</td></tr><tr><td>Mistakes</td><td style="color:var(--bad)">${wrong}</td></tr>
+        <tr><td>Final performance</td><td>${SH.perf}%</td></tr><tr><td>XP earned</td><td>+${SH.xp}</td></tr>${SH.bonus ? `<tr><td>Urgent task bonus</td><td>${money(SH.bonus)}</td></tr>` : ""}<tr><td>Paycheck</td><td class="money">${money(pay)}</td></tr></table>
+      <div class="lessons"><span class="lbl">What you learned today</span>${learned.map(t => `<div class="lesson"><b>${t.subject}:</b> ${t.lesson}</div>`).join("")}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn go big" type="button" id="again">Next shift</button><button class="btn" type="button" id="lob">Back to the lobby</button></div>
+    </div></div></div>`;
+  window.scrollTo(0, 0);
+  if (promoted) { Sfx.promo(); setTimeout(() => Sfx.cash(), 900); } else Sfx.cash();
+  const id = job.id; SH = null;
+  $("#again").addEventListener("click", () => { Sfx.ok(); startShift(id); });
+  $("#lob").addEventListener("click", showLobby);
+}
+
+showTitle();
+})();
+</script>

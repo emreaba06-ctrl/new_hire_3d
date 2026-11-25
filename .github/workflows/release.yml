@@ -1,0 +1,34 @@
+name: Build and release Windows app
+
+# Push a tag like v1.0.1 (matching desktop/package.json "version") to build
+# the installer on a Windows runner and publish it as a GitHub Release.
+# Installed copies of the game see the new release and update themselves.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build the game
+        run: python tools/assemble.py
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Build installer and publish release
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --x64 --publish always

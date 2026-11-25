@@ -1,0 +1,8 @@
+node_modules/
+desktop/game/
+desktop/release/
+desktop/dist/
+game/dist/
+__pycache__/
+*.log
+.DS_Store
