@@ -96,7 +96,7 @@ function furnish(where, W, D, extra = {}) {
     if (t >= 4) { tall("Fireplace", -4, D / 2 - .5, Math.PI); tall("Couch_L", -3.5, 1.2, 0); tall("Light_Chandelier", 0, 0, 0, { y: (E.room.H || 3.2) - .05, hang: true, collide: false }); }
   } else if (where === "office") {
     const F = extra.F;
-    if (F && F.coffeePos) { tall("Kitchen_Fridge", -W / 2 + .55, F.coffeePos[1] + 1.7, Math.PI / 2, { s: .95 }); tall("Kitchen_Sink", -W / 2 + .45, F.coffeePos[1] - 1.05, Math.PI / 2); tall("Trashcan_Large", -W / 2 + .5, F.coffeePos[1] - 2, 0, { s: .55 }); }
+    if (F && F.coffeePos) { tall("Kitchen_Fridge", -W / 2 + .55, F.coffeePos[1] + 1.7, Math.PI / 2, { s: .95 }); tall("Kitchen_Sink", -W / 2 + .45, F.coffeePos[1] - 1.05, Math.PI / 2); tall("Trashcan_Large", -W / 2 + .5, F.coffeePos[1] - 3, 0, { s: .55 }); }
     tall("Shelf_Small1", -W / 2 + .2, -3, Math.PI / 2, { y: 1.5, collide: false, s: .9 });
     tall("Light_Floor1", W / 2 - .6, D / 2 - .6, 0); tall("Houseplant_8", W / 2 - .6, 4.5, 0);
   } else if (where === "training") {

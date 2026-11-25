@@ -47,6 +47,8 @@ js = "\n".join([
     (here / "fixes.js").read_text(encoding="utf-8"),
     (here / "post.js").read_text(encoding="utf-8"),
     (here / "materials.js").read_text(encoding="utf-8"),
+    (here / "decor.js").read_text(encoding="utf-8"),
+    (here / "living.js").read_text(encoding="utf-8"),
     (here / "online.js").read_text(encoding="utf-8"),
     "boot();\n",
     "})();",

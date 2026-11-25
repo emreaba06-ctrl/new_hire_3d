@@ -137,7 +137,7 @@ function goLocation(loc, opts = {}) {
     else if (loc === "roof") buildRoof(opts);
     else if (loc === "garage") buildGarage(opts);
     if (loc === "cafe" && opts.party) partyDecor(opts.party);
-    decorate(); lobbySecret();
+    decorate(); lobbySecret(); livingReset();
     if (S.partyPending === S.day && S.phase === "evening" && loc !== "cafe" && loc !== "home" && holiday()) { S.partyPending = 0; setTimeout(() => offerParty(holiday()), 1200); }
     setLighting(hourNow(), S.weather); hud(); hudTick(); Voice.stop(); Music.play(musicFor());
     if (opts.fromElevator || loc === "floor") { Sfx.tone(1318, .5, "sine", .05); Sfx.tone(1046, .7, "sine", .045, .32); }
@@ -271,6 +271,7 @@ function buildFloor(job, o) {
   }
   // your desk
   const pd = PROP.desk(0, 7.2, Math.PI, { phone: true, screen: job.color, chair: SHIRTS[S.player.look.shirt] });
+  deptSignature(job, lay, W, D, F);
   PROP.myCubicle(0, 8.55, th.panel ? shade(th.panel, -.05) : "#6b4f3a"); PROP.clutter(pd.g, 1); PROP.clutter(pd.g, -1); collider(0, 8.55, 2.7, .2);
   PROP.clock(4.2, -D / 2 + .2, 0); PROP.cork(-W / 2 + .2, -6, Math.PI / 2); if (lay === "office") PROP.cork(-W / 2 + .2, 0.5, Math.PI / 2, 1.75, 1.5, .9);
   decorateDesk(pd.g); F.desk = pd; F.deskPos = V3(0, 0, 7.2);
@@ -290,7 +291,7 @@ function buildFloor(job, o) {
     if (th.headset) look.headset = true;
     if (th.uniform) Object.assign(look, { shirtHex: th.uniform.shirt, pantsHex: th.uniform.pants, outfit: th.uniform.outfit ?? look.outfit, modular: th.uniform.mod });
     const standing = lay === "warehouse" || lay === "open";
-    if (!standing && i < Math.min(7, seats.length)) { const s = seats[i]; const n = addNPC({ kind: "coworker", name: nm, role: job.dept, look, x: s.seat.x, z: s.seat.z, ry: s.ry, sit: true }); n.hearts = S.friends[nm] || 0; n.life = "desk"; n.next = 8 + Math.random() * 30; }
+    if (!standing && i < Math.min(7, seats.length)) { const s = seats[i]; const n = addNPC({ kind: "coworker", name: nm, role: job.dept, look, x: s.seat.x, z: s.seat.z, ry: s.ry, sit: true }); n.hearts = S.friends[nm] || 0; n.life = "desk"; n.next = 4 + Math.random() * 16; }
     else if (standing && i < 6) { const [x, z] = F.wander[i % F.wander.length]; const n = addNPC({ kind: "coworker", name: nm, role: job.dept, look, x, z }); n.hearts = S.friends[nm] || 0; n.life = "wander"; n.next = 2 + Math.random() * 8; }
   });
   E.F = F; if (lay === "office") furnish("office", W, D, { F });
@@ -335,6 +336,7 @@ function coworkerTalk(n) {
   const job = jobById(CUR_JOB); const key = S.day + "|" + n.name; let msg;
   if (!S.talked[key]) { S.talked[key] = 1; n.hearts = Math.min(5, (S.friends[n.name] || 0) + 1 + (owns("figure") && Math.random() < .5 ? 1 : 0)); S.friends[n.name] = n.hearts; n.labelKey = ""; save(); if (SH) { SH.energy = Math.min(100, SH.energy + 3); SH.stress = Math.max(0, SH.stress - 5); } checkAch();
     const tasks = job ? job.tasks : []; msg = Math.random() < .55 && tasks.length ? "Tip: " + pick(tasks).lesson.split(". ")[0] + "." : pick(CHATTER);
+    const mem = Math.random() < .5 && memoryLine(n); if (mem) msg = mem; else remember(n, msg);
     if (n.hearts === 3) msg = "You're alright! If you're swamped, I'll cover a visitor for you."; }
   else msg = pick(["Back to work!", "Good luck today!", "Let me know if you need anything.", n.hearts >= 3 ? "I've got your back today." : "Busy busy!"]);
   npcSay(n, msg, 5); Sfx.click();
@@ -445,7 +447,7 @@ function resolveTask(x, ok) {
   }
 }
 function tick(dt) {
-  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt);
+  Ambience.tick(dt); stormTick(dt); roomSounds(dt); if (LOC !== "floor" && LOC !== "title") wanderTick(dt); if (LOC === "floor" || LOC === "lobby") livingTick(dt);
   if (E.F && LOC === "floor") lifeTick(dt);
   E.lightT = (E.lightT || 0) + dt; if (E.lightT > 1) { E.lightT = 0; if (LOC !== "title") setLighting(hourNow(), S.weather); if (CUR_JOB && THEMES[CUR_JOB] && THEMES[CUR_JOB].dim) E.hemi.intensity = .55; hudTick(); if (Music.out && Music.cur && musicFor() !== Music.want) Music.play(musicFor()); }
   const c = !E.uiOpen && LOC !== "title" ? candidates() : null; const pr = $("#prompt");

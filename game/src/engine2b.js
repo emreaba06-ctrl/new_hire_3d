@@ -281,7 +281,7 @@ function placeLabel(el, pos, yOff) {
 function updateLabels() {
   const pp = Player.mesh ? Player.mesh.position : V3();
   for (const n of E.npcs) {
-    const d = n.mesh.position.distanceTo(pp); const task = n.task; const speaking = n.speechUntil > E.t;
+    const d = n.mesh.position.distanceTo(pp); const task = n.task; const speaking = n.speechUntil > E.t && d < 8.5;
     const show = !E.orbit && (task || speaking || d < 4 || n.alwaysLabel);
     if (!show) { n.label.style.display = "none"; continue; }
     const key = [task ? task.urgent + "|" + Math.round(task.patienceRatio * 10) : "", speaking ? n.speech : "", n.name, n.hearts, d < 4].join("~");
