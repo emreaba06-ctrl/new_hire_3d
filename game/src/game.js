@@ -65,7 +65,7 @@ function award(id) { if (S.ach[id]) return; const a = ACH.find(x => x[0] === id)
 function hud() {
   const h = $("#hud"); if (!S.player || LOC === "title") { h.hidden = true; $("#camctl").hidden = true; return; }
   h.hidden = false; $("#camctl").hidden = false;
-  const job = CUR_JOB ? jobById(CUR_JOB) : null; const where = LOC === "home" ? HOMES[S.home].name : LOC === "lobby" ? "Lobby" : LOC === "training" ? "Training Center" : LOC === "cafe" ? "Cafeteria" : LOC === "roof" ? "Rooftop Garden" : LOC === "garage" ? "Parking garage" : job ? `Floor ${job.floor}: ${job.dept}` : "";
+  const job = CUR_JOB ? jobById(CUR_JOB) : null; const where = LOC === "home" ? HOMES[S.home].name : LOC === "lobby" ? "Lobby" : LOC === "training" ? "Training Center" : LOC === "cafe" ? "Cafeteria" : LOC === "roof" ? "Rooftop Garden" : LOC === "garage" ? "Parking garage" : LOC === "street" ? "Main Street" : job ? `Floor ${job.floor}: ${job.dept}` : "";
   $("#hudWho").innerHTML = `${avatar(S.player.look, 40)}<div><b>${esc(S.player.name)}</b><span>${playerTitle() ? `<i class="ptitle">${esc(playerTitle())}</i> · ` : ""}${where}</span></div>`;
   $("#hudDay").textContent = `${season().icon} Day ${S.day} · ${S.storm && S.weather === "rain" ? "Stormy" : WEATHER_TXT[S.weather]}${holiday() ? " · " + holiday().name : ""}`;
   $("#hudMoney").textContent = money(S.money); $("#hudRep").textContent = S.rep;
@@ -136,6 +136,7 @@ function goLocation(loc, opts = {}) {
     else if (loc === "cafe") buildCafe(opts);
     else if (loc === "roof") buildRoof(opts);
     else if (loc === "garage") buildGarage(opts);
+    else if (loc === "street") buildStreet(opts);
     if (loc === "cafe" && opts.party) partyDecor(opts.party);
     decorate(); lobbySecret(); livingReset();
     if (S.partyPending === S.day && S.phase === "evening" && loc !== "cafe" && loc !== "home" && holiday()) { S.partyPending = 0; setTimeout(() => offerParty(holiday()), 1200); }
@@ -158,7 +159,7 @@ function buildLobby(o) {
   PROP.board(-6.5, -D / 2 + .2, 0, ["BRIGHTLINE CORP", "Every job starts on day one"], { w: 4.4, h: 1.5, bg: "#1b5ea6", fg: "#fff" });
   directoryBoard(6.5, -D / 2 + .2);
   const td = PROP.door(-W / 2 + .15, 4, Math.PI / 2, "TRAINING", "#2a7fd4"); addInter({ name: "Training Center", verb: "Enter the Training Center", x: -W / 2 + 1.2, z: 4, r: 1.8, mesh: td, action: () => goLocation("training", { text: "Training Center" }) });
-  const ex = PROP.door(W / 2 - .15, 7, -Math.PI / 2, "EXIT"); addInter({ name: "Exit", verb: "Go home", x: W / 2 - 1.2, z: 7, r: 1.8, mesh: ex, action: () => goLocation("home", { text: "Heading home..." }) });
+  const ex = PROP.door(W / 2 - .15, 7, -Math.PI / 2, "EXIT"); addInter({ name: "Exit", verb: "Leave the building", x: W / 2 - 1.2, z: 7, r: 1.8, mesh: ex, action: () => goLocation("street", { fromBuilding: true, text: "Main Street" }) });
   const kg = group(-5, 4.5); box(kg, .5, 1, .5, "#2b2f36", 0, 0, 0); const ks = new THREE.Mesh(bgeo(.8, .6, .05), new THREE.MeshBasicMaterial({ map: textTex(["DAILY", "CHALLENGE"], { w: 256, h: 192, bg: "#f08a12", size: 44, size2: 34 }) })); ks.material.userData.own = true; ks.position.set(0, 1.35, 0); ks.rotation.x = -.3; kg.add(ks); collider(-5, 4.5, .6, .6);
   addInter({ name: "Daily challenge", verb: "Play today's challenge", x: -5, z: 4.5, r: 1.7, mesh: kg, mark: () => S.daily.day !== S.day || !S.daily.done ? "!" : "", action: openDaily });
   const jb = PROP.board(W / 2 - .2, -2.5, -Math.PI / 2, ["JOB BOARD", "Careers · Offers · Paths"], { w: 3, h: 1.6, bg: "#3a9e2e", fg: "#fff" }); addInter({ name: "Job board", verb: "Check the job board", x: W / 2 - 1.3, z: -2.5, r: 1.8, mesh: jb, mark: () => S.offer ? "!" : "", action: () => openPhone("career") });
@@ -174,7 +175,7 @@ function buildLobby(o) {
 function buildHome(o) {
   CUR_JOB = null; const tier = S.home; const size = [[10, 8], [12, 9], [12, 10], [14, 11], [18, 13]][tier]; const [W, D] = size;
   E.weather = S.weather; buildRoom(W, D, tier === 0 ? "carpet" : tier === 4 ? "wood" : "wood", tier === 0 ? "#8a7766" : tier === 4 ? "#6d4a2e" : "#b98a58", ["#e9dfc9", "#dfe6ea", "#f1ece2", "#e6edf2", "#f4f4f2"][tier], { southWindows: tier >= 3 });
-  const door = PROP.door(W / 2 - 1.6, -D / 2 + .15, 0, "TO WORK"); addInter({ name: "Front door", verb: S.phase === "evening" ? "It's late. Sleep first." : "Go to work", x: W / 2 - 1.6, z: -D / 2 + 1.2, r: 1.8, mesh: door, action: () => { if (S.phase === "evening") { toast("It's evening. The office is closed. Get some sleep first."); return; } if (S.car >= 1) goLocation("garage", { text: `Commuting by ${CARS[S.car].name.toLowerCase()}...` }); else goLocation("lobby", { text: "Commuting to Brightline..." }); } });
+  const door = PROP.door(W / 2 - 1.6, -D / 2 + .15, 0, "TO WORK"); addInter({ name: "Front door", verb: S.phase === "evening" ? "It's late. Sleep first." : "Go to work", x: W / 2 - 1.6, z: -D / 2 + 1.2, r: 1.8, mesh: door, action: () => { if (S.phase === "evening") { toast("It's evening. The office is closed. Get some sleep first."); return; } if (S.car >= 3) goLocation("garage", { text: `Commuting by ${CARS[S.car].name.toLowerCase()}...` }); else if (S.car >= 1) goLocation("street", { text: `Riding your ${CARS[S.car].name.toLowerCase()} to work...` }); else goLocation("street", { byBus: true, text: "Riding bus 42 to work..." }); } });
   let bed;
   if (tier === 0) { bed = PROP.sofa(-W / 2 + 2, -D / 2 + 1.2, 0, "#7a6a55", 2.4); PROP.boxes(.2, -D / 2 + .7); PROP.tv(-.6, D / 2 - 1.2, Math.PI); PROP.kitchen(W / 2 - .7, 1.4, -Math.PI / 2, 2.2);
     const mom = addNPC({ kind: "npc", name: "Mom", role: "Family", look: { g: "f", outfit: 2, skin: S.player.look.skin, hair: 4, shirt: 3, style: 1, pants: 1 }, x: W / 2 - 2, z: 1.4, ry: -Math.PI / 2 }); mom.onTalk = n => npcSay(n, pick(["Did you eat breakfast?", "So proud of my working kid!", "Save some money, sweetie. You can't live on my couch forever.", S.phase === "evening" ? "How was work? Tell me everything!" : "Don't forget your badge!"])); }
@@ -417,7 +418,7 @@ function startShift(job, ot, night) {
   list.forEach(x => { x.state = "wait"; x.patienceRatio = 1; });
   const startPerf = 70 + HOMES[S.home].perf + (owns("chair") ? 5 : 0) + S.nextPerf; S.nextPerf = 0;
   SH = { job, js, diff, rush, list: list.sort((a, b) => a.at - b.at), minute: 0, perf: clamp(startPerf, 10, 100), energy: 100, stress: 10, xp: 0, bonus: 0, mistakes: 0, firstMistake: true, freeHints: (owns("monitor") ? 1 : 0) + (has("favorite") ? 1 : 0), covered: false, deskPos: E.F.deskPos, deskInter: E.inters.find(i => i.name === "Your desk"), event: Math.random() < .6 ? { kind: pick(["fire", "dog", "ceo", "pizza", "birthday", "badge", "pigeon"]), at: 140 + Math.random() * 180, done: false } : null, spot: {} };
-  burnStart(SH); if (ot) addOvertime(SH); if (night) nightStart(SH);
+  burnStart(SH); if (S.coffeeBuff === S.day) { SH.energy = Math.min(100, SH.energy + 10); S.coffeeBuff = 0; } if (ot) addOvertime(SH); if (night) nightStart(SH);
   save(); hud(); Sfx.ok(); standUp(job, SH);
   toast(rush ? `<b>${RUSH[job.id] || "Rush day"}!</b> Extra tasks, extra urgent, 1.5× pay.` : `Shift started. Help everyone who comes to you, and check your desk.`, rush ? "red" : "");
   if (S.weather === "rain") setTimeout(() => toast("It's raining. People are a bit grumpier today (less patience)."), 1800);

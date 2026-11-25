@@ -20,7 +20,7 @@ const holiday = () => HOLIDAYS[yearDay()] || null;
 const year = () => Math.floor((S.day - 1) / 56) + 1;
 
 function decorate() {
-  if (LOC === "title" || !E.room) return;
+  if (LOC === "title" || LOC === "street" || LOC === "garage" || !E.room) return;
   const h = holiday(), sn = season(), W = E.room.W, D = E.room.D;
   const lights = (cols) => { for (let i = 0; i < 18; i++) { const x = -W / 2 + .3 + (W - .6) * i / 17; const b = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), new THREE.MeshBasicMaterial({ color: cols[i % cols.length] })); b.position.set(x, 2.95 - Math.abs(Math.sin(i * .9)) * .12, -D / 2 + .12); E.world.add(b); } };
   if (h && h.sticker === "pumpkin") { for (const [x, z] of [[-3, -D / 2 + 1.2], [3, -D / 2 + 1.2], [-W / 2 + 1, 0], [W / 2 - 1, 2]]) { const p = new THREE.Mesh(new THREE.SphereGeometry(.22, 14, 10), mat("#e8761c")); p.scale.y = .78; p.position.set(x, .17, z); E.world.add(p); const st = new THREE.Mesh(new THREE.CylinderGeometry(.025, .03, .1, 6), mat("#4b6b2a")); st.position.set(x, .38, z); E.world.add(st); } lights(["#ff7a1a", "#8e44ad"]); }

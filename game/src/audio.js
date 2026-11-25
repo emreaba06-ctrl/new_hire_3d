@@ -136,6 +136,7 @@ function musicFor() {
   if (LOC === "title") return "title";
   if (LOC === "cafe") return "lobby";
   if (LOC === "roof") return "home";
+  if (LOC === "street") return "lobby";
   if (LOC === "home") return S.phase === "evening" ? "night" : "home";
   if (LOC === "floor") return SH && (SH.rush || SH.list.some(x => x.state === "active" && x.urgent)) ? "rush" : "office";
   return "lobby";

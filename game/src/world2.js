@@ -36,7 +36,7 @@ function buildGarage() {
   shuffle(spots.filter(s => s !== mine)).slice(0, 7).forEach(([x, z]) => parkedCar(x, z, pick(["#c0392b", "#2c3e50", "#ecf0f1", "#7f8c8d", "#2980b9", "#16a085"]), 3));
   if (kind >= 3) parkedCar(mine[0], mine[1], kind === 4 ? "#ffd23f" : "#3a7bd5", kind, true);
   else { const g = group(mine[0], mine[1]); box(g, .1, .9, 1.4, "#333", 0, .1, 0); box(g, .1, .1, 1.4, kind === 1 ? "#27ae60" : "#e67e22", 0, .9, 0); const wheel = new THREE.TorusGeometry(.32, .05, 8, 18); [-.6, .6].forEach(z => { const w = new THREE.Mesh(wheel, mat("#1d1d1d")); w.position.set(0, .34, z); w.rotation.y = Math.PI / 2; g.add(w); }); }
-  addInter({ name: `Your ${CARS[kind].name.toLowerCase()}`, verb: "Admire your ride", x: mine[0], z: mine[1] - 2.2, r: 1.8, action: () => toast(pick([`Looking good. Remember: car insurance and gas are real monthly costs.`, `Parked perfectly. Mostly.`, `Your ${CARS[kind].name.toLowerCase()} gleams under the garage lights.`])) });
+  addInter({ name: `Your ${CARS[kind].name.toLowerCase()}`, verb: S.phase === "evening" ? "Drive home" : "Admire your ride", x: mine[0], z: mine[1] - 2.2, r: 1.8, action: () => S.phase === "evening" ? goLocation("home", { text: "Driving home..." }) : toast(pick([`Looking good. Remember: car insurance and gas are real monthly costs.`, `Parked perfectly. Mostly.`, `Your ${CARS[kind].name.toLowerCase()} gleams under the garage lights.`])) });
   spawnPlayer(mine[0] + 1.25, 4.8, Math.PI);
 }
 function parkedCar(x, z, color, tier, mine) {
@@ -53,6 +53,7 @@ function roomSounds(dt) {
   if (S.muted || !Sfx.ctx || E.uiOpen) return; roomSfxT -= dt; if (roomSfxT > 0) return;
   if (LOC === "roof") { roomSfxT = 2 + Math.random() * 5; const f = 2200 + Math.random() * 1400; for (let i = 0; i < 2 + Math.floor(Math.random() * 3); i++) Sfx.tone(f + Math.random() * 300, .06, "sine", .015, i * .09, f * 1.3); }
   else if (LOC === "garage") { roomSfxT = 6 + Math.random() * 10; if (Math.random() < .5) { Sfx.tone(1050, .12, "square", .015); Sfx.tone(1050, .12, "square", .015, .18); } else Sfx.tone(55, 1.6, "sawtooth", .02, 0, 40); }
+  else if (LOC === "street") { roomSfxT = 4 + Math.random() * 8; if (Math.random() < .25) { Sfx.tone(392, .25, "square", .02); Sfx.tone(392, .25, "square", .02, .3); } else Sfx.tone(70, 2.2, "sawtooth", .015, 0, 50); }
   else if (LOC === "cafe") { roomSfxT = 1 + Math.random() * 3; Sfx.tone(3200 + Math.random() * 1500, .04, "triangle", .01); }
   else if (LOC === "home") { roomSfxT = 1; if (S.phase === "evening" && Math.random() < .15) Sfx.tone(1900, .02, "sine", .006); }
   else roomSfxT = 5;
