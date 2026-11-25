@@ -214,7 +214,8 @@ function buildFloor(job, o) {
   if (th.dim) { E.hemi.intensity = .55; }
   elevator(-D / 2); addInter({ name: "Elevator", verb: SH ? "Elevator (ends your shift)" : "Ride the elevator", x: 0, z: -D / 2 + 1.4, r: 2, h: 3.2, action: openElevator });
   const crew = roster(job); const F = { W, D, seats: [], coffee: null, sofa: null, printer: null, lunch: [], wander: [] };
-  const deskOpts = { screen: job.color, cubicle: th.panel };
+  const premium = (typeof DEPT_STYLE !== "undefined" && DEPT_STYLE[job.id] === "premium");
+  const deskOpts = premium ? { screen: job.color, top: "#5a3a22", chair: "#1d1d1d", exec: true } : { screen: job.color, cubicle: th.panel ? mutePanel(th.panel) : undefined };
   if (lay === "office") {
     const xs = [-10, -6, 6, 10], zs = [-6, -2.2, 1.6];
     xs.forEach(x => zs.forEach(z => { const d = PROP.desk(x, z, 0, deskOpts); F.seats.push(d); }));

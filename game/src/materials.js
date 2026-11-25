@@ -33,7 +33,7 @@ const shadeRGB = (rgb, k) => [rgb[0] * k, rgb[1] * k, rgb[2] * k];
 
 const GEN = {
   wood(color, N) { // 4 planks per tile, staggered seams, grain and knots
-    const base = hexRGB(color || "#b98a58"), grain = octaves(11, 3), fine = octaves(29, 16, 2), r = makeNoise(7, 64);
+    const base = hexRGB(color && color !== "#b98a58" ? color : "#a8865f"), grain = octaves(11, 3), fine = octaves(29, 16, 2), r = makeNoise(7, 64);
     const seams = [.13, .61, .37, .86];
     return (u, v) => { const p = Math.floor(v * 4), pv = v * 4 - p, tone = .82 + r(p / 64, .5) * .3;
       const g = fbm(grain, u * .5 + p * .27, v * 2), ring = .5 + .5 * Math.sin((v * 4 + g * 3.2) * 38 + u * 6), f = fbm(fine, u, v);
@@ -54,7 +54,7 @@ const GEN = {
     const vein = octaves(17, 2, 5), cloud = octaves(41, 3, 3);
     return (u, v) => { const t = Math.floor(u * 2) + Math.floor(v * 2) * 2, w = fbm(vein, u + t * .31, v + t * .17);
       const vn = Math.pow(1 - Math.abs(Math.sin((u * 1.6 + v * .9 + w * 2.6) * Math.PI * 2)), 26), cl = fbm(cloud, u, v);
-      const bright = 238 - cl * 20 - vn * 28; let r = bright, g = bright + 2, b = bright + 6, h = .7;
+      const bright = 224 - cl * 20 - vn * 26; let r = bright, g = bright + 2, b = bright + 6, h = .7;
       const eu = Math.min(u * 2 % 1, 1 - u * 2 % 1), ev = Math.min(v * 2 % 1, 1 - v * 2 % 1); if (eu < .004 || ev < .004) { r = g = b = 170; h = .1; }
       return [r, g, b, h]; };
   },
@@ -77,7 +77,7 @@ const ROUGH = { wood: .55, carpet: .98, marble: .16, concrete: .88, plaster: .93
 function richFloorMat(kind, color, W, D) {
   const g = GEN[kind === "tile" ? "carpet" : kind] || (kind === "carpet" || !kind ? GEN.carpet : null); if (!g) return null;
   const N = texSize(), k = kind in GEN ? kind : "carpet"; const set = genTex(`floor:${k}:${color}:${N}`, N, g(color, N), k === "marble" ? .6 : k === "carpet" ? 1.4 : 2.2);
-  const rep = { wood: 3.2, carpet: 2.4, marble: 4, concrete: 4 }[k] || 3;
+  const rep = { wood: .9, carpet: 1.1, marble: 2.6, concrete: 3 }[k] || 2;
   const map = set.map.clone(), normalMap = set.normalMap.clone(); [map, normalMap].forEach(t => { t.needsUpdate = true; t.repeat.set(W / rep, D / rep); });
   return new THREE.MeshStandardMaterial({ map, normalMap, normalScale: new THREE.Vector2(.9, .9), roughness: ROUGH[k], metalness: 0, envMapIntensity: k === "marble" ? 1.2 : .6 });
 }

@@ -32,8 +32,9 @@ function wallPanel(side, a0, a1, y0, y1, material, inset = .155) {
 function industrialCeiling(o = {}) {
   const W = E.room.W, D = E.room.D, H = E.room.H || 3.2;
   (E.ceilFix || []).forEach(m => m.visible = false); E.ceilLights = [];
-  if (E.ceil) E.ceil.material = new THREE.MeshStandardMaterial({ color: lin(o.dark ? "#1c1f24" : "#3a3d42"), roughness: .95 });
-  const duct = mat("#b8bcc2", { metal: .7, rough: .35 }), pipe = mat(o.dark ? "#2a2d33" : "#8a5a3b", { rough: .5 }), blk = mat("#16181c", { rough: .4 });
+  if (E.ceil) E.ceil.material = new THREE.MeshStandardMaterial({ color: lin(o.dark ? "#1c1f24" : o.light ? "#e4e1db" : "#3a3d42"), roughness: .95 });
+  if (E.beamMat) E.beamMat.visible = false;
+  const duct = mat(o.light ? "#eef0f2" : "#b8bcc2", { metal: o.light ? .2 : .7, rough: .35 }), pipe = mat(o.dark ? "#2a2d33" : o.light ? "#c9ccd1" : "#8a5a3b", { rough: .5 }), blk = mat(o.light ? "#2b2e33" : "#16181c", { rough: .4 });
   for (const z of [-D / 4, D / 2 - 2.4]) { const d = new THREE.Mesh(cgeo(.2, .2, W - 1, 18), duct); d.rotation.z = Math.PI / 2; d.position.set(0, H - .3, z); E.world.add(d); for (let x = -W / 2 + 2; x < W / 2 - 1; x += 3.2) { const ring = new THREE.Mesh(cgeo(.212, .212, .05, 18), duct); ring.rotation.z = Math.PI / 2; ring.position.set(x, H - .3, z); E.world.add(ring); } }
   for (const z of [-D / 2 + 1.2, D / 2 - 1.4]) for (const dy of [0, .14]) { const p = new THREE.Mesh(cgeo(.05, .05, W - .6, 8), pipe); p.rotation.z = Math.PI / 2; p.position.set(0, H - .2 - dy, z); E.world.add(p); }
   for (let x = -W / 2 + 3; x < W / 2 - 2; x += o.dense ? 3.5 : 5) box(E.world, .3, .06, D - 2, "#5a5e66", x, H - .7, 0, { cast: false });
@@ -52,8 +53,8 @@ function downlightCeiling(color = "#f3efe7") {
   const strip = new THREE.MeshBasicMaterial({ color: lin("#ffd9a0") }); [[0, -D / 2 + .25, W - .5, .04], [0, D / 2 - .25, W - .5, .04], [-W / 2 + .25, 0, .04, D - .5], [W / 2 - .25, 0, .04, D - .5]].forEach(([x, z, w, d]) => { const s = new THREE.Mesh(bgeo(w, .02, d), strip); s.position.set(x, H - .02, z); E.world.add(s); });
 }
 function pendant(x, z, color = "#16181c", drop = 1.25, glowC = "#ffd9a0") {
-  drop = Math.min(drop * .62, .8); const H = E.room.H || 3.2, g = group(x, z); const c = new THREE.Mesh(cgeo(.008, .008, drop, 4), mat("#111")); c.position.y = H - drop / 2; g.add(c);
-  const shade = new THREE.Mesh(new THREE.ConeGeometry(.22, .26, 18, 1, true), mat(color, { rough: .4, metal: .5 })); shade.material.side = THREE.DoubleSide; shade.position.y = H - drop - .1; g.add(shade);
+  drop = Math.min(drop * .5, .6); const H = E.room.H || 3.2, g = group(x, z); const c = new THREE.Mesh(cgeo(.008, .008, drop, 4), mat("#111")); c.position.y = H - drop / 2; g.add(c);
+  const shade = new THREE.Mesh(new THREE.SphereGeometry(.2, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(color === "#c9a227" ? "#7a5a2a" : color, { rough: .35, metal: .6 })); shade.material.side = THREE.DoubleSide; shade.position.y = H - drop - .02; g.add(shade);
   const bulb = new THREE.Mesh(sgeo(.07, 10, 8), new THREE.MeshBasicMaterial({ color: lin(glowC) })); bulb.position.y = H - drop - .2; g.add(bulb);
 }
 
@@ -115,6 +116,7 @@ function applyDeptStyle(job, lay, W, D, F) {
     if (job.id === "dev") { wallPanel("w", -4.9, -1, .7, 2.5, new THREE.MeshStandardMaterial({ color: lin("#1f4fd1"), roughness: .3 }), .16); }
     for (const x of [-10, -6, 6, 10]) pendant(x, 8.6, "#1d1f24", 1.2);
   } else if (st === "premium") {
+    (F.seats || []).forEach(execDesk);
     downlightCeiling(); const wood = surfMat(slatSet("#7a5232"), 9, 1, { roughness: .6 });
     wallPanel("n", -W / 2 + .2, -1.9, 0, 3.2, wood); wallPanel("n", 1.9, W / 2 - .2, 0, 3.2, wood);
     if (job.id === "bank") { wallPanel("s", -W / 2 + .2, W / 2 - .2, 0, .5, surfMat(slatSet("#5a3a22"), 12, 1), .157); }
@@ -130,7 +132,7 @@ function applyDeptStyle(job, lay, W, D, F) {
 
 /* ---------- shared spaces ---------- */
 function styleLobby() {
-  const W = E.room.W, D = E.room.D; industrialCeiling({ warm: true });
+  const W = E.room.W, D = E.room.D; industrialCeiling({ warm: true, light: true });
   wallPanel("n", -W / 2 + .2, -1.9, 0, 3.2, surfMat(brickSet(), 4.5, 1.4)); wallPanel("n", 1.9, W / 2 - .2, 0, 3.2, surfMat(brickSet(), 4.5, 1.4));
   rug(6.5, -6.6, 5.6, 2.6, "#4a4d52");
   for (const x of [-4, 0, 4]) pendant(x, 1.2, "#1d1f24", 1.3);
@@ -178,3 +180,8 @@ function streetBuildings() {
   apartmentBlock(-30, -10, 10, 26, 8, "#c9b79c", 0, "aptLL"); apartmentBlock(30, -10, 10, 16, 8, "#8fa3b8", 0, "aptRR");
   shopRow(-25, 12.6, 8);
 }
+
+/* muted, realistic cubicle fabric (mix the department color with office gray) */
+function mutePanel(hex) { const a = new THREE.Color(hex), b = new THREE.Color("#8d9198"); a.lerp(b, .55); return "#" + a.getHexString(); }
+/* executive desk extras: modesty panel, leather pad, brass lamp */
+function execDesk(d) { if (!d || !d.g) return; const g = d.g; box(g, 1.7, .55, .04, "#4a2f1c", 0, .18, .32); box(g, .6, .01, .4, "#2b1d14", -.1, .775, -.05); const lb = new THREE.Mesh(cgeo(.06, .08, .03, 16), mat("#b08d3a", { metal: .8, rough: .3 })); lb.position.set(.6, .79, .15); g.add(lb); const arm = new THREE.Mesh(cgeo(.012, .012, .35, 6), mat("#b08d3a", { metal: .8, rough: .3 })); arm.position.set(.6, .97, .15); g.add(arm); const hd = new THREE.Mesh(new THREE.SphereGeometry(.09, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat("#1f4d2e", { rough: .4 })); hd.material.side = THREE.DoubleSide; hd.position.set(.6, 1.13, .1); g.add(hd); }

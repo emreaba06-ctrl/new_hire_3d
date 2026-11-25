@@ -16,10 +16,10 @@ function contactShadows() {
 /* ---------- 3. dust motes in the sun ---------- */
 function dustMotes() {
   if (!hiQ() || !E.room || LOC === "street" || LOC === "garage" || hourNow() >= 18 || S.weather === "rain") return;
-  const W = E.room.W, D = E.room.D, N = 260, pos = new Float32Array(N * 3);
+  const W = E.room.W, D = E.room.D, N = 90, pos = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - .5) * W * .9; pos[i * 3 + 1] = .4 + Math.random() * 2.4; pos[i * 3 + 2] = (Math.random() - .5) * D * .9; }
   const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: lin("#fff3d6"), size: .025, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending })); E.world.add(pts);
+  const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: lin("#fff3d6"), size: .018, transparent: true, opacity: .28, depthWrite: false, blending: THREE.AdditiveBlending })); E.world.add(pts);
   E.anims.push(dt => { const a = g.attributes.position.array; for (let i = 0; i < N; i++) { a[i * 3 + 1] += Math.sin(E.t * .3 + i) * dt * .02; a[i * 3] += Math.cos(E.t * .2 + i * 1.7) * dt * .015; } g.attributes.position.needsUpdate = true; });
 }
 /* ---------- 6. rain running down the windows ---------- */

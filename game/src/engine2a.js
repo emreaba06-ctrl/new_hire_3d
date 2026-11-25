@@ -24,7 +24,9 @@ function mat(color, o) {
 }
 function basicMat(o) { const m = new THREE.MeshBasicMaterial(Object.assign({}, o)); if (o.color) m.color = lin(o.color); return m; }
 function stdMat(o) { const c = o.color; const m = new THREE.MeshStandardMaterial({ map: o.map || null, roughness: o.shininess ? clamp(1 - o.shininess / 140, .05, .95) : .7, metalness: o.shininess >= 120 ? .5 : 0, transparent: !!o.transparent, opacity: o.opacity ?? 1 }); if (c) m.color = lin(c); if (o.emissive) { m.emissive = lin(o.emissive); m.emissiveIntensity = o.emissiveIntensity ?? 1; } return m; }
-function bgeo(w, h, d) { const k = w + "|" + h + "|" + d; return GEOS[k] || (GEOS[k] = new THREE.BoxGeometry(w, h, d)); }
+function bgeo(w, h, d) { const k = w + "|" + h + "|" + d; if (GEOS[k]) return GEOS[k]; const mn = Math.min(w, h, d), mx = Math.max(w, h, d);
+  const round = THREE.RoundedBoxGeometry && typeof S !== "undefined" && S.gfx !== "perf" && mn > .035 && mx > .12 && mx < 40;
+  return (GEOS[k] = round ? new THREE.RoundedBoxGeometry(w, h, d, 2, Math.min(.035, mn * .2)) : new THREE.BoxGeometry(w, h, d)); }
 function sgeo(r, ws = 18, hs = 14, a, b, c, d) { const k = ["s", r, ws, hs, a, b, c, d].join("|"); return GEOS[k] || (GEOS[k] = new THREE.SphereGeometry(r, ws, hs, a, b, c, d)); }
 function cgeo(rt, rb, h, seg = 16) { const k = ["c", rt, rb, h, seg].join("|"); return GEOS[k] || (GEOS[k] = new THREE.CylinderGeometry(rt, rb, h, seg)); }
 function box(parent, w, h, d, color, x, y, z, o = {}) {

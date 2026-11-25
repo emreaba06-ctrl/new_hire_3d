@@ -18,6 +18,7 @@ PROP.desk = function (x, z, ry = 0, o = {}) {
     const fab = S.gfx !== "perf" ? fabricMat(o.cubicle) : mat(o.cubicle, { rough: .95 }), trim = mat("#c8bfae", { rough: .5 });
     const back = new THREE.Mesh(bgeo(1.82, 1.22, .06), fab); back.position.set(0, .61, .47); back.castShadow = back.receiveShadow = true; g.add(back);
     const side = new THREE.Mesh(bgeo(.06, 1.22, .95), fab); side.position.set(.9, .61, 0); side.castShadow = side.receiveShadow = true; g.add(side);
+    const al = "#c3c7cd"; box(g, 1.88, .035, .085, al, 0, 1.22, .47); box(g, .085, .035, 1.0, al, .9, 1.22, 0); for (const [px, pz] of [[-.92, .47], [.9, .47], [.9, -.47]]) box(g, .06, 1.25, .06, al, px, 0, pz); box(g, 1.82, .07, .075, "#4a4e55", 0, 0, .47); box(g, .075, .07, .95, "#4a4e55", .9, 0, 0);
     box(g, 1.86, .04, .08, "#c8bfae", 0, 1.22, .47, { mat: trim, cast: false }); box(g, .08, .04, .99, "#c8bfae", .9, 1.22, 0, { mat: trim, cast: false });
     const notes = ["#ffe066", "#ff9ec7", "#9fe6a0", "#8fd3ff"]; for (let i = 0; i < 2 + Math.floor(Math.random() * 4); i++) { const n = new THREE.Mesh(bgeo(.09, .09, .004), mat(pick(notes), { rough: .9 })); n.position.set(-.75 + Math.random() * 1.5, .95 + Math.random() * .2, .438); n.rotation.z = (Math.random() - .5) * .3; g.add(n); }
     for (let i = 0; i < 2; i++) { const pp = new THREE.Mesh(bgeo(.22, .005, .3), mat("#f7f5ef", { rough: .9 })); pp.position.set(.45 + i * .03, .752 + i * .006, -.05); pp.rotation.y = (Math.random() - .5) * .4; g.add(pp); }

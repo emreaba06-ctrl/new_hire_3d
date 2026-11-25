@@ -37,8 +37,8 @@ function rimify(obj) {
 { // wrap character + furniture builders
   const mp = makePerson; makePerson = function (look) { const r = mp(look); if (r && r.userData && r.userData.model) { rimify(r); addOutline(r, .012); } return r; };
   const mm = makeModular; makeModular = function (look) { const r = mm(look); if (r) { rimify(r); addOutline(r, .012); } return r; };
-  const fm = PROP.fm; PROP.fm = function (name, x, z, ry, o = {}) { const g = fm.call(PROP, name, x, z, ry, o); if (g && !/Carpet|Curtain|Light_/.test(name)) addOutline(g, .02); return g; };
+  const fm = PROP.fm; PROP.fm = function (name, x, z, ry, o = {}) { const g = fm.call(PROP, name, x, z, ry, o); if (g && !/Carpet|Curtain|Light_/.test(name)) addOutline(g, /Couch|Bed|Chair|Pillow/.test(name) ? .007 : .012); return g; };
 }
 /* brighter, softer fill light and a richer grade */
 { const sl = setLighting; setLighting = function (h, w) { sl(h, w); if (!toonOn() || !E.hemi) return; E.hemi.intensity *= 1.45; if (E.sun) E.sun.intensity *= .92; }; }
-function toonGrade() { if (!POST.grade || !toonOn()) return; const u = POST.grade.uniforms; u.uContrast.value = 1.1; u.uSat.value = Math.max(u.uSat.value, 1.2); u.uVig.value = .26; }
+function toonGrade() { if (!POST.grade || !toonOn()) return; const u = POST.grade.uniforms; u.uContrast.value = 1.06; u.uSat.value = 1.08; u.uVig.value = .22; u.uWarm.value = Math.min(u.uWarm.value, .025); }
